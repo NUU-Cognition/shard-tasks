@@ -31,7 +31,7 @@ Read [[dev-knw-task-dev]] too before you work on a `task.dev`.
 | subtask | A Strike target mounted on an Ops task. Ops does not show subtasks. |
 | task group | A set of tasks that are done together, usually in one session. Each task stays a full task. |
 | lineage | The links `split-from`, `merged-into`, `continues-from`, and `after` (chain). |
-| home | The one place of a task: a deliverable subsection, a project backlog folder, or the org master backlog. 0 or 1. |
+| home | The one place of a task: a section (of a deliverable, a project, a deployment, or the org), or none. The backlog of a project is its section with the role `backlog`; the master backlog is the backlog section of the org. A subtask has the home of its root task. 0 or 1. The service word of a section is `subsection` (ops-command-1021). |
 | related | A link from a task to a project, a deliverable, a repository, a Flint, or a v1 address. 0 or more. |
 | unplaced | A task with no home. A normal state. |
 | attachment | A link from a task or a task group to a session, a fleet, a note, or a repository. |
@@ -93,7 +93,7 @@ The Flint id is `flint.id` of `flint org show --json`. Then apply the rule:
 
 | Hints | Action |
 |---|---|
-| One clear hint | Set the home: `ops task home <ref> --subsection <id>` or `ops task home <ref> --backlog --project <id> [--folder <id>]` |
+| One clear hint | Set the home: `ops task home <ref> --section <id>` or `ops task home <ref> --backlog --project <id>`; for a deliverable, a deployment inbox, or a parent task: `ops task move <ref> --to deliverable:<id>` (or `deployment:<id>`, `parent:<task>`) |
 | Two or more hints | Add a `related` link to each: `ops task relate <ref> deliverable <deliverableId>` when the hint has `deliverableId`, else `ops task relate <ref> project <projectId>`. Never relate a deliverable by its title. Leave the task unplaced. |
 | No hint | Leave the task unplaced, with no project or deliverable link. |
 

@@ -22,7 +22,7 @@ This file is the model of the task primitive v0.1 (Notepad 237, Task 1287, secti
 | subtask | A Strike target mounted on an Ops task. Ops does not show subtasks. |
 | task group | A set of tasks that are done together, usually in one session. Each task stays a full task. |
 | lineage | The links `split-from`, `merged-into`, `continues-from`, and `after` (chain). |
-| home | The one place of a task: a deliverable subsection, a project backlog folder, or the org master backlog. 0 or 1. |
+| home | The one place of a task: a section (of a deliverable, a project, a deployment, or the org), or none. The backlog of a project is its section with the role `backlog`; the master backlog is the backlog section of the org. A subtask has the home of its root task. 0 or 1. The service word of a section is `subsection` (ops-command-1021). |
 | related | A link from a task to a project, a deliverable, a repository, a Flint, or a v1 address. 0 or more. |
 | unplaced | A task with no home. A normal state. |
 | attachment | A link from a task or a task group to a session, a fleet, a note, or a repository. |
@@ -87,9 +87,9 @@ These fields are new in v0.1. All of them are optional, so each older row stays 
 | `stage` | The current stage. Absent: no stage yet. |
 | `fields` | The type fields, by name. A value is a string or a list of strings. |
 | `outcome` | `completed`, `dropped`, or `superseded`. Set when the status becomes `done`. |
-| `unplaced` | `true`: the task has no project, deliverable, subsection, or folder. |
+| `unplaced` | `true`: the task has no project, deliverable, or section. |
 
-The fields of before stay: `title`, `body`, `checkbox` (the status), `priority`, `ownerUserId`, `blocked`, `result`, and the placement fields `projectId`, `deliverableId`, `subsectionId`, and `folderId`. Task 1291 adds `note` (the note address) and `noteLabel` (the note label), both optional.
+The fields of before stay: `title`, `body`, `checkbox` (the status), `priority`, `ownerUserId`, `blocked`, `result`, and the placement fields `projectId`, `deliverableId`, `subsectionId` (the section), and `folderId` (a backlog folder of before the revamp of ops-command-1021). The revamp adds `parentTaskId` (a subtask), `tag`, and `recurrence`. Task 1291 adds `note` (the note address) and `noteLabel` (the note label), both optional.
 
 ## The Body of a Task With No Note
 
@@ -187,7 +187,7 @@ A link never deletes history. Each link has a holder (the "from" task) and a tar
 
 | Part | Count | Values |
 |---|---|---|
-| home | 0 or 1 | A deliverable subsection, a project backlog (with an optional folder), or the org master backlog |
+| home | 0 or 1 | A section: of a deliverable, of a project (its backlog has the role `backlog`), of a deployment (its inbox), or of the org (the master backlog) |
 | related | 0 or more | `project`, `deliverable`, `repo`, `flint`, or `address` |
 
 - A task with no home is **unplaced**. That is normal. An unplaced task is not in the org master backlog: the master backlog is a home. The tab Unplaced of Ops lists the unplaced tasks.
@@ -202,7 +202,7 @@ A link never deletes history. Each link has a holder (the "from" task) and a tar
 | The text | `--text "<title>"` | The projects and the deliverables whose title shares words with the text |
 | The repository | `--repo <name>` | The projects of the tasks that have a `repo` relation with that name |
 
-A hint whose home is a subsection or a deliverable has `deliverableId`. Relate a deliverable by that id, never by its title.
+A hint whose home is a section of a deliverable has `deliverableId`. Relate a deliverable by that id, never by its title.
 
 **The placement rule.**
 
