@@ -1,0 +1,68 @@
+{
+  "format": "shard-invocation/0.3",
+  "workflow": "wkfl-task-do_task_group",
+  "title": "Do Task Group",
+  "inputs": {
+    "task": {
+      "kind": "text",
+      "required": false,
+      "description": "The address of the task group, for example @v1/nuucognition/taskgroup/<id>#ops. For a new task group, give no input, and set it after Stage 1 with flint shard invocations set-input <id> task=<address>."
+    }
+  },
+  "steps": [
+    {
+      "id": "group",
+      "title": "Task Group",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 1: Task Group",
+      "next": "Read the task group with ops task group show --json, or make it with ops task group create. Read each task, and choose the order. For a new task group, set the input: flint shard invocations set-input {{invocation}} task=<address>."
+    },
+    {
+      "id": "pin",
+      "title": "Pin",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 2: Pin",
+      "next": "Pin the task group: flint orbh task pin {{task}}. Check the TASK line with flint orbh task show."
+    },
+    {
+      "id": "work",
+      "title": "Each Task",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 3: Each Task",
+      "next": {
+        "interactive": "Do the tasks of {{task}} one at a time. Record each commit on its own task: with ops task commit for a task.dev, in the result for an untyped task. Write its result, set built for a task.dev, run flint shard task task-sync on it, and close each task alone when it can close.",
+        "headless": "Set the phase implementing. Do the tasks of {{task}} one at a time, and keep the progress current. Record each commit on its own task: with ops task commit for a task.dev, in the result for an untyped task. Write its result, set built for a task.dev, and run flint shard task task-sync on it."
+      }
+    },
+    {
+      "id": "summary",
+      "title": "Summary and Review Handoff",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 4: Summary and Review Handoff",
+      "next": {
+        "interactive": "Give the person a summary of each task, and the review_task command of each task.dev at built. Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
+        "headless": "Set the phase complete. Close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the summary of each task and each review_task command in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+      }
+    }
+  ],
+  "behaviours": [
+    {
+      "id": "pin-hint",
+      "on": "invocation.open",
+      "when": { "task": "set" },
+      "say": "Pin the task group before the first edit: flint orbh task pin {{task}}"
+    },
+    {
+      "id": "task-missing",
+      "on": "session.return",
+      "phase": "before",
+      "disposition": ["finish"],
+      "when": { "task": "empty" },
+      "say": "The input task is empty: no task group is recorded. Set it with flint shard invocations set-input {{invocation}} task=<address>, or close the invocation with --outcome abandoned."
+    }
+  ]
+}

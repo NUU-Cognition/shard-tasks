@@ -1,0 +1,72 @@
+{
+  "format": "shard-invocation/0.3",
+  "workflow": "wkfl-task-create_task",
+  "title": "Create Task",
+  "inputs": {
+    "task": {
+      "kind": "text",
+      "required": false,
+      "description": "The address of the task, for example @v1/nuucognition/task.dev/<id>#ops. The task does not exist at the open: set it after Stage 1 with flint shard invocations set-input <id> task=<address>."
+    }
+  },
+  "then": [
+    {
+      "shard": "task",
+      "workflow": "do_task",
+      "inputs": { "task": "{{task}}" }
+    }
+  ],
+  "steps": [
+    {
+      "id": "create",
+      "title": "Task Creation",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 1: Task Creation",
+      "next": {
+        "interactive": "Look for an open task with the same intent first. Create the task with flint shard task task-new and a body file of the note. Then set the input to the field ops of its output: flint shard invocations set-input {{invocation}} task=<address>.",
+        "headless": "Set the phase creating-task. Look for an open task with the same intent first. Create the task with flint shard task task-new and a body file of the note from the prompt. Then set the input to the field ops of its output: flint shard invocations set-input {{invocation}} task=<address>."
+      }
+    },
+    {
+      "id": "place",
+      "title": "Placement",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 2: Placement",
+      "next": "Place {{task}} with sk-task-place_task: a given place wins; one clear hint sets the home; two or more hints add a related link each; no hint leaves the task unplaced."
+    },
+    {
+      "id": "review",
+      "title": "Task Review",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 3: Task Review",
+      "next": {
+        "interactive": "Give the person the title, the type, the place, and the task note of {{task}}. Write each change of the content into the note until the person confirms.",
+        "headless": "Check the task note of {{task}} yourself: it must read as a complete task. When the scope is not clear, use a deferred request."
+      }
+    },
+    {
+      "id": "finalise",
+      "title": "Finalise",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 4: Finalise",
+      "next": {
+        "interactive": "For a task.dev with a complete scope, set the stage: ops task stage {{task}} scoped. Then run flint shard task task-sync {{task}}, and close the invocation: flint shard invocations close {{invocation}} --outcome done.",
+        "headless": "For a task.dev with a complete scope, set the stage: ops task stage {{task}} scoped. Run flint shard task task-sync {{task}}. Close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the do_task command of the close in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+      }
+    }
+  ],
+  "behaviours": [
+    {
+      "id": "task-missing",
+      "on": "session.return",
+      "phase": "before",
+      "disposition": ["finish"],
+      "when": { "task": "empty" },
+      "say": "The input task is empty: no task is recorded. Set it with flint shard invocations set-input {{invocation}} task=<address>, or close the invocation with --outcome abandoned."
+    }
+  ]
+}

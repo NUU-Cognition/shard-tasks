@@ -1,0 +1,85 @@
+{
+  "format": "shard-invocation/0.3",
+  "workflow": "wkfl-task-do_task",
+  "title": "Do Task",
+  "inputs": {
+    "task": {
+      "kind": "text",
+      "required": true,
+      "description": "The address of the task, for example @v1/nuucognition/task.dev/<id>#ops."
+    }
+  },
+  "then": [
+    {
+      "shard": "task",
+      "workflow": "review_task",
+      "inputs": { "task": "{{task}}" },
+      "when": { "session.mode": ["headless"] }
+    }
+  ],
+  "steps": [
+    {
+      "id": "pin",
+      "title": "Pin",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 1: Pin",
+      "next": "Read the task with ops task show {{task}} --json, and its task note (a task with no note gets one: flint shard task task-new --ops {{task}}). Pin it before the first edit: flint orbh task pin {{task}}. Set doing when it is todo: ops task start {{task}}. Then run flint shard task task-sync {{task}}."
+    },
+    {
+      "id": "work",
+      "title": "Task Work",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 2: Task Work",
+      "next": {
+        "interactive": "Do the work of {{task}}. Make each step that serves its intent a subtask in Strike. For a task.dev, record each WIP commit: ops task commit {{task}} <sha> --repo <name>. For an untyped task, name the commits in the result.",
+        "headless": "Set the phase implementing. Do the work of {{task}}, and keep the progress current. For a task.dev, record each WIP commit: ops task commit {{task}} <sha> --repo <name>. For an untyped task, name the commits in the result. When blocked, use a deferred request."
+      }
+    },
+    {
+      "id": "built",
+      "title": "Built",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 3: Built",
+      "next": "Write the result with ops task result {{task}} '<text>'. For a task.dev, set the stage: ops task stage {{task}} built --note '<the commits and the tests>'. Then run flint shard task task-sync {{task}}."
+    },
+    {
+      "id": "review",
+      "title": "Review Handoff",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 4: Review Handoff",
+      "next": {
+        "interactive": "Give the person the summary of {{task}}. The review comes next in a second session: flint shard invoke task review_task --input task={{task}}. Toward the review now: skip the step close, and close the invocation with --outcome done.",
+        "headless": "Set the phase complete. Mark this step done, and close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the review_task command of the close in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+      }
+    },
+    {
+      "id": "close",
+      "title": "Close",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 5: Close",
+      "modes": ["interactive"],
+      "next": "A task.dev closes with completed only at reviewed or verified. When the stage is right and the person confirms, close it with sk-task-close_task: ops task close {{task}}, then flint shard task task-sync {{task}}. Else skip this step with a reason, and close the invocation with --outcome done."
+    }
+  ],
+  "behaviours": [
+    {
+      "id": "pin-hint",
+      "on": "invocation.open",
+      "when": { "task": "set" },
+      "say": "Pin the task before the first edit: flint orbh task pin {{task}}"
+    },
+    {
+      "id": "return-check",
+      "on": "session.return",
+      "phase": "before",
+      "disposition": ["finish"],
+      "when": { "task": "set" },
+      "say": "Before the return: write the result of {{task}}. For a task.dev, record each WIP commit with ops task commit and set built. For an untyped task, name the commits in the result. Then run flint shard task task-sync {{task}}. Put the review_task command in the result."
+    }
+  ]
+}

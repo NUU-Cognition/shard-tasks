@@ -1,0 +1,90 @@
+{
+  "format": "shard-invocation/0.3",
+  "workflow": "wkfl-task-create_and_do_task",
+  "title": "Create and Do Task",
+  "inputs": {
+    "task": {
+      "kind": "text",
+      "required": false,
+      "description": "The address of the task, for example @v1/nuucognition/task.dev/<id>#ops. The task does not exist at the open: set it after Stage 1 with flint shard invocations set-input <id> task=<address>."
+    }
+  },
+  "then": [
+    {
+      "shard": "task",
+      "workflow": "review_task",
+      "inputs": { "task": "{{task}}" },
+      "when": { "session.mode": ["headless"] }
+    }
+  ],
+  "steps": [
+    {
+      "id": "create",
+      "title": "Task Creation",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 1: Task Creation",
+      "next": {
+        "interactive": "Create the task with flint shard task task-new and a body file of the note, place it, pin its Ops address with flint orbh task pin, set doing, and run flint shard task task-sync. Then set the input to the field ops of the output of task-new: flint shard invocations set-input {{invocation}} task=<address>.",
+        "headless": "Set the phase creating-task. Create the task with flint shard task task-new and a body file of the note from the prompt, place it, pin its Ops address with flint orbh task pin, set doing, and run flint shard task task-sync. Then set the input to the field ops of the output of task-new: flint shard invocations set-input {{invocation}} task=<address>."
+      }
+    },
+    {
+      "id": "work",
+      "title": "Task Work",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 2: Task Work",
+      "next": {
+        "interactive": "Do the work of {{task}}. Make each step that serves its intent a subtask in Strike. For a task.dev, record each WIP commit: ops task commit {{task}} <sha> --repo <name>. For an untyped task, name the commits in the result.",
+        "headless": "Set the phase implementing. Do the work of {{task}}, and keep the progress current. For a task.dev, record each WIP commit: ops task commit {{task}} <sha> --repo <name>. For an untyped task, name the commits in the result. When blocked, use a deferred request."
+      }
+    },
+    {
+      "id": "built",
+      "title": "Built",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 3: Built",
+      "next": "Write the result with ops task result {{task}} '<text>'. For a task.dev, set the stage: ops task stage {{task}} built --note '<the commits and the tests>'. Then run flint shard task task-sync {{task}}."
+    },
+    {
+      "id": "review",
+      "title": "Review Handoff",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 4: Review Handoff",
+      "next": {
+        "interactive": "Give the person the summary of {{task}}. The review comes next in a second session: flint shard invoke task review_task --input task={{task}}. Toward the review now: skip the step close, and close the invocation with --outcome done.",
+        "headless": "Set the phase complete. Mark this step done, and close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the review_task command of the close in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+      }
+    },
+    {
+      "id": "close",
+      "title": "Close",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 5: Close",
+      "modes": ["interactive"],
+      "next": "A task.dev closes with completed only at reviewed or verified. When the stage is right and the person confirms, close it with sk-task-close_task: ops task close {{task}}, then flint shard task task-sync {{task}}. Else skip this step with a reason, and close the invocation with --outcome done."
+    }
+  ],
+  "behaviours": [
+    {
+      "id": "task-missing",
+      "on": "session.return",
+      "phase": "before",
+      "disposition": ["finish"],
+      "when": { "task": "empty" },
+      "say": "The input task is empty: no task is recorded. Set it with flint shard invocations set-input {{invocation}} task=<address>, or close the invocation with --outcome abandoned."
+    },
+    {
+      "id": "return-check",
+      "on": "session.return",
+      "phase": "before",
+      "disposition": ["finish"],
+      "when": { "task": "set" },
+      "say": "Before the return: write the result of {{task}}. For a task.dev, record each WIP commit with ops task commit and set built. For an untyped task, name the commits in the result. Then run flint shard task task-sync {{task}}. Put the review_task command in the result."
+    }
+  ]
+}

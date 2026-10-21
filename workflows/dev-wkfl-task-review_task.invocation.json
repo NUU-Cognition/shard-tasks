@@ -1,0 +1,47 @@
+{
+  "format": "shard-invocation/0.3",
+  "workflow": "wkfl-task-review_task",
+  "title": "Review Task",
+  "inputs": {
+    "task": {
+      "kind": "text",
+      "required": true,
+      "description": "The address of the task to review, for example @v1/nuucognition/task.dev/<id>#ops. For a task.dev, the stage is usually built."
+    }
+  },
+  "steps": [
+    {
+      "id": "verify",
+      "title": "Verify",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 1: Verify",
+      "next": {
+        "interactive": "Read {{task}} with ops task show --json, and its task note. Stop when this session set built: a session does not review its own work. Pin the task, check each item of the definition of done against reality, and give the findings to the person.",
+        "headless": "Set the phase reviewing. Read {{task}} with ops task show --json, and its task note. Stop when this session set built. Pin the task, and check each item of the definition of done against reality. Keep the findings for the body and the result."
+      }
+    },
+    {
+      "id": "resolve",
+      "title": "Resolve",
+      "by": "agent",
+      "evidence": "optional",
+      "stage": "Stage 2: Resolve",
+      "next": {
+        "interactive": "Fix each failed item that is straightforward, commit it, and for a task.dev record it with ops task commit {{task}} <sha> --repo <name>. Flag each other item to the person.",
+        "headless": "Set the phase resolving. Fix each failed item that is straightforward, commit it, and for a task.dev record it with ops task commit {{task}} <sha> --repo <name>. Use a deferred request for a decision that you cannot make."
+      }
+    },
+    {
+      "id": "verdict",
+      "title": "Verdict",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 3: Verdict",
+      "next": {
+        "interactive": "Pass: for a task.dev, set the stage: ops task stage {{task}} reviewed. Fail: write the findings under Review Findings in the task note. Never set verified, and do not close the task. Run flint shard task task-sync {{task}}. Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
+        "headless": "Pass: for a task.dev, set the stage: ops task stage {{task}} reviewed. Fail: write the findings under Review Findings in the task note. Never set verified, and do not close the task. Run flint shard task task-sync {{task}}. Close the invocation: flint shard invocations close {{invocation}} --outcome done. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+      }
+    }
+  ]
+}

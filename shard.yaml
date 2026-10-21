@@ -1,0 +1,12 @@
+shard-spec: "0.4.0"
+shard: "@nuucognition/tasks"
+id: 4686b8d6-54b2-4659-9682-171903339185
+source:
+  id: b2a094b2-bc4f-43b2-a256-a4ed5d30d110
+version: "0.1.0"
+name: Tasks
+shorthand: task
+description: "Tasks in NUU Ops, each with a Flint task note: one task entity with types, stages, task groups, lineage, placement, and session pins"
+dependencies:
+  "@nuucognition/flint": ""
+  "@nuucognition/projects": "^1.6"

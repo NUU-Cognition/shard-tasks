@@ -1,0 +1,77 @@
+{
+  "format": "shard-invocation/0.3",
+  "workflow": "wkfl-task-scope_task",
+  "title": "Scope Task",
+  "inputs": {
+    "task": {
+      "kind": "text",
+      "required": false,
+      "description": "The address of the task to scope, for example @v1/nuucognition/task.dev/<id>#ops. Give it at the open for a task that exists. Else Stage 3 creates the task: then set it with flint shard invocations set-input <id> task=<address>."
+    }
+  },
+  "then": [
+    {
+      "shard": "task",
+      "workflow": "do_task",
+      "inputs": { "task": "{{task}}" }
+    }
+  ],
+  "steps": [
+    {
+      "id": "research",
+      "title": "Research",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 1: Research",
+      "next": "Research before you write: the task in Ops when it exists, the Mesh, the code, and the related Ops tasks. Write nothing yet."
+    },
+    {
+      "id": "proposal",
+      "title": "Draft Proposal",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 2: Draft Proposal",
+      "next": "Write the proposal in paragraphs (background, approach, alternatives, open questions, references), and the scope with the definition of done."
+    },
+    {
+      "id": "write",
+      "title": "Scope Writing",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 3: Scope Writing",
+      "next": "Write the scope into the task note of the task, or create the task with flint shard task task-new and a body file, and place it. When you create it, set the input to the field ops of the output: flint shard invocations set-input {{invocation}} task=<address>."
+    },
+    {
+      "id": "review",
+      "title": "Proposal Review",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 4: Proposal Review",
+      "next": {
+        "interactive": "Walk the person through the proposal of {{task}}, and write each change into the task note until the person confirms.",
+        "headless": "Check the scope of {{task}} yourself. Keep each open question under Notes with your recommendation."
+      }
+    },
+    {
+      "id": "finalise",
+      "title": "Finalise",
+      "by": "agent",
+      "evidence": "required",
+      "stage": "Stage 5: Finalise",
+      "next": {
+        "interactive": "Resolve or defer each open question. For a task.dev, set the stage: ops task stage {{task}} scoped. Run flint shard task task-sync {{task}}. Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
+        "headless": "Resolve or defer each open question. For a task.dev, set the stage: ops task stage {{task}} scoped. Run flint shard task task-sync {{task}}. Close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the do_task command in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+      }
+    }
+  ],
+  "behaviours": [
+    {
+      "id": "task-missing",
+      "on": "session.return",
+      "phase": "before",
+      "disposition": ["finish"],
+      "when": { "task": "empty" },
+      "say": "The input task is empty: no task is recorded. Set it with flint shard invocations set-input {{invocation}} task=<address>, or close the invocation with --outcome abandoned."
+    }
+  ]
+}
