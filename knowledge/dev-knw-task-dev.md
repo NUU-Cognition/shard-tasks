@@ -69,11 +69,11 @@ Rule C4.8: `ops task retype <ref> task.dev` gives a task that is not done the ty
 
 A `task.dev` records each commit of its work. The rules of OrbRepo stay: the machine branch, explicit staging, and no rewrite of history.
 
-1. **Pin first.** The session pins the task (or its task group) before the first edit: `flint orbh task pin <ref>`.
+1. **Add the task first.** The session adds the task as an object before the first edit: `flint orbh objects add <address> --subscribe`. For a task group, add each task of the task group.
 2. **Check the branch.** Work on the machine branch of this machine (for example `nathan-main`). Never commit WIP to `dev` or `main`.
 3. **Stage only your files.** `git commit -m "<message>" -- <path>...`. Never use `git add -A`, `git add .`, or `git commit -a`.
 4. **The subject.** `[OR] wip: <Flint name>/Task <short id> <what changed>`. The Flint name has no `(Flint)` prefix (for example `NUU Flint`). The short id is the first 8 characters of the Ops id of the task. Add a short body that says what changed.
-5. **The trailer.** The commit hook of Orbh adds `Task: <address>` from the pin, beside `Orbh-Fleet` and `Orbh-Session`. Do not write the trailer by hand. With no pin, the commit has no `Task:` trailer. With a task group pin, the trailer names the task group: then the subject names the task.
+5. **The trailers.** The commit hook of Orbh adds `Orbh-Fleet` and `Orbh-Session`. Do not write a trailer by hand. The subject names the task (rule 4).
 6. **Record the commit.** After each commit: `ops task commit <ref> <sha> --repo <name>`. This appends `<sha> (<repo>)` to `wipCommits`. Only a `task.dev` has this field (see § Commits of an Untyped Task). To remove a wrong item, use `ops task field <ref> wipCommits "<item>" --remove`, not a `set` of the whole list.
 7. **Check the commit.** `git show --stat HEAD` must list only your paths.
 
@@ -90,7 +90,7 @@ ops task commit @v1/nuucognition/task.dev/jd7f3k2m9n8p4q5r6s7t8u9v0w1x2y3z#ops "
 
 An untyped task has no type fields, so it has no field `wipCommits`. `ops task commit` (and `ops task field`) on an untyped task refuses with `task_untyped`.
 
-- The commit rules 1 to 5 and 7 stay: the pin, the machine branch, only your paths, the subject, the trailer, and the check.
+- The commit rules 1 to 5 and 7 stay: the task object, the machine branch, only your paths, the subject, the trailers, and the check.
 - In place of rule 6, name the commits in the result of the task: `ops task result <ref> "<summary>. Commits: <sha> (<repo>), …"`.
 - Work that changes code in a repository is usually a `task.dev`. Choose the type before the work. When an untyped task turns out to be a software task, retype it: `ops task retype <ref> task.dev --json`, then set its repository (`ops task field <ref> repo <name>` and `ops task relate <ref> repo <name>`). Use the `address` of the output from then on. Do not make a new task for it. Then record its commits with `ops task commit`.
 

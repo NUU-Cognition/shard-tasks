@@ -19,12 +19,12 @@
   ],
   "steps": [
     {
-      "id": "pin",
-      "title": "Pin",
+      "id": "object",
+      "title": "Task Object",
       "by": "agent",
       "evidence": "required",
-      "stage": "Stage 1: Pin",
-      "next": "Read the task with ops task show {{task}} --json, and its task note (a task with no note gets one: flint shard task task-new --ops {{task}}). Pin it before the first edit: flint orbh task pin {{task}}. Set doing when it is todo: ops task start {{task}}. Then run flint shard task task-sync {{task}}."
+      "stage": "Stage 1: Task Object",
+      "next": "Read the task with ops task show {{task}} --json, and its task note (a task with no note gets one: flint shard task task-new --ops {{task}}). Add it as an object before the first edit: flint orbh objects add {{task}} --subscribe. Set doing when it is todo: ops task start {{task}}. Then run flint shard task task-sync {{task}}."
     },
     {
       "id": "work",
@@ -68,10 +68,10 @@
   ],
   "behaviours": [
     {
-      "id": "pin-hint",
+      "id": "object-hint",
       "on": "invocation.open",
       "when": { "task": "set" },
-      "say": "Pin the task before the first edit: flint orbh task pin {{task}}"
+      "say": "Add the task as an object before the first edit: flint orbh objects add {{task}} --subscribe"
     },
     {
       "id": "return-check",

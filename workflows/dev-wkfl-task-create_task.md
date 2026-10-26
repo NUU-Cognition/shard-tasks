@@ -45,7 +45,7 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
   ```
 - Keep the `ops` (the Ops address) and the `path` (the note) of the output. When the output has `ops: null`, the note exists and the Ops part failed: fix the cause, then run the command of `next` (`task-link`). Never run `task-new` again for the same task.
 - With an open invocation, set the input: `flint shard invocations set-input <id> task=<ops address>`.
-- Do not pin the new task: this workflow does not do its work. The pin of the session does not change.
+- Do not add the new task as an object: this workflow does not do its work. The objects of the session do not change.
 - Once the note and the Ops task exist, progress to the next stage.
 
 > [!headless]

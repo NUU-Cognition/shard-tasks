@@ -26,7 +26,7 @@ This file is the model of the task primitive v0.1 (Notepad 237, Task 1287, secti
 | related | A link from a task to a project, a deliverable, a repository, a Flint, or a v1 address. 0 or more. |
 | unplaced | A task with no home. A normal state. |
 | attachment | A link from a task or a task group to a session, a fleet, a note, or a repository. |
-| task pin | The Orbh session keys `core:task` and `core:task-info`. |
+| task object | An Ops task in the context of an Orbh session: an item of the Objects Protocol (`flint orbh objects add <address> --subscribe`). The Page shows it in the `OBJECTS` block. |
 
 Always write "task group", not "group" alone. Orbh has job groups (`--until-group`), and Invironments has `#ie/groups/`.
 
@@ -42,7 +42,7 @@ The rules:
 - Ops owns the status, the stage, and the outcome. `task-sync` copies them, the type, and the date of the close into the note, in one direction only. A change goes to Ops first, then `task-sync` runs.
 - `task-new` makes both parts and links them. `task-link` links a note and an Ops task that exist. `task-new --ops` gives a note to an Ops task that has none.
 - A task that a person makes in the web, or that Strike makes, has no note. It keeps its body, and the rules of the body below apply to it.
-- The Ops address stays the key of the task: the pin, the invocation input `task`, the attachments, and the commit trailer use it.
+- The Ops address stays the key of the task: the task object of a session, the invocation input `task`, and the attachments use it.
 - Ops holds all views of tasks: the page `/<org>/tasks` with the tabs All, Unplaced, and Groups, and the task detail. The detail and each row show the note as "Open in Obsidian" (the open link).
 - The note and the Ops task are two things with two ids (D8 of `ADDRESS.md`), and the fields `ops` and `note` link them (R27 of `ADDRESS.md`). The stored note address is the id form with the UUID; the chain form `@v1/<org>/flint/<flint>/task/<n>` is for typed input only.
 - The Projects shard does not change. Its task notes have no Ops task.
@@ -218,7 +218,7 @@ The skill [[dev-sk-task-place_task]] applies the rule.
 
 | Kind | `ref` | Example |
 |---|---|---|
-| `session` | The session address `@v1/<org>/session/<uuid>#flint/<slug>#<machine>`, with `--session-id <id>` | Made by `flint orbh task pin` |
+| `session` | The session address `@v1/<org>/session/<uuid>#flint/<slug>#<machine>`, with `--session-id <id>` | A session of the work |
 | `fleet` | The fleet handle | `task-prim-1287` |
 | `note` | A Mesh path or a v1 address | A notepad or a report of the work |
 | `repo` | The repository name | `main` |
@@ -231,7 +231,7 @@ The skill [[dev-sk-task-place_task]] applies the rule.
 ## Subtasks
 
 - A subtask is a part of a task. It lives only in Strike: a Strike target mounted on the Ops task. Ops does not show subtasks.
-- The rule for new work: when the work serves the intent of the pinned task, make a subtask in Strike. When it does not, make a new task (or pin another task).
+- The rule for new work: when the work serves the intent of a task object of the session, make a subtask in Strike. When it does not, make a new task (or add another task as an object).
 
 ## Addresses
 
@@ -244,8 +244,8 @@ The skill [[dev-sk-task-place_task]] applies the rule.
 
 - The type word `taskgroup` has no hyphen: a v1 type word is `^[a-z][a-z0-9]*$`.
 - A resolve of `task/<id>` also finds a typed task.
-- An undo of the delete of a task can give it a new id. Ops records the move (`task_moves`, old id to new id), and a resolve of the old address gives the task with its current address: `ops task show <old address> --json` shows the new canonical address. Use the new address from then on. `flint orbh task show` or `flint orbh task sync` updates a pin to it.
-- Write the address in prompts, in pins, and in attachments. A Convex id alone is correct only inside one org.
+- An undo of the delete of a task can give it a new id. Ops records the move (`task_moves`, old id to new id), and a resolve of the old address gives the task with its current address: `ops task show <old address> --json` shows the new canonical address. Use the new address from then on. When the task is an object of the session, add the new address as an object, and remove the item of the old address.
+- Write the address in prompts, in object verbs, and in attachments. A Convex id alone is correct only inside one org.
 
 ## Error Codes
 

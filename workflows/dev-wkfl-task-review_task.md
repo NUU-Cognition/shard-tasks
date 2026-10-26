@@ -35,12 +35,12 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 - Read the task: `ops task show <address> --json`, and its task note (the field `note`; its file is `response.presences[0].path` of `flint resolve <note> --json`). Read the scope and the definition of done in the note, the result, the field `wipCommits`, the stage events (`stageEvents`, oldest first), and the attachments.
 - **A second session.** Check the stage events. When the `session` of the last event with `to: "built"` is this session (`$ORBH_SESSION_ID`), stop: a session does not review its own work. Tell the person (or return the refusal to the dispatcher).
 - **The stage.** For a `task.dev` with no `built` stage, tell the person that the work is not built yet, and ask whether to continue.
-- Pin the task: `flint orbh task pin <address>`. The pin records the review session on the task.
+- Add the task as an object: `flint orbh objects add <address> --subscribe` ([[dev-sk-task-use_task]]).
 - For each item of the definition of done:
   - Check that the work exists: the files, the code, the commits in `wipCommits` (`git show --stat <sha>` in the repository of the field `repo`).
   - **Make contact with reality.** Run the build, the tests, or the commands when you can. Prefer a run to a read.
   - Record each item as passed or failed, with the evidence.
-- Check that each commit lists only the paths of the task, and that it has the trailer `Task: <address>` when the work session had a pin.
+- Check that each commit lists only the paths of the task, and that its subject names the short id of the task.
 - Give the person the findings: the items that passed, the items that failed (with the facts), and the items that are done but not ticked.
 - Once the person has read the findings, progress to the next stage.
 
@@ -81,4 +81,3 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 # Output
 
 - A `task.dev` at `reviewed`, or the findings in the task note; the note shows the state
-- The review session attached to the task

@@ -28,7 +28,7 @@ Split a task that is too big, or that holds two intents, into new tasks.
 4. **Give each part its task note.** Write the body of the note of each part to a temporary file: its context (with the address of the old task), its scope, and its items of the definition of done. Then make the note and link it to the part: `flint shard task task-new --ops <part address> --body-file <file>` (the title and the type come from the part). For a `task.dev` with a complete scope, set `ops task stage <part address> scoped`, then `flint shard task task-sync <part address>`.
 5. **Sync the old note:** `flint shard task task-sync <old address>`. Its status becomes `superseded` (unless `--keep-open`). Add a `# Task Log` line in the old note with the address of each part.
 6. **Move the attachments that matter.** A note of the old task that serves one part: `ops task attach <part ref> note "<Mesh path>"`.
-7. **Pin again.** When the session pinned the old task, pin the part that the session does now: `flint orbh task pin <part address>`.
+7. **Add the part.** When the old task is an object of the session, add the part that the session does now as an object: `flint orbh objects add <part address> --subscribe`. Remove the item of the old task when the work no longer needs it.
 8. **Chain or group the parts** when they have an order or are done together: [[dev-sk-task-chain_tasks]], [[dev-sk-task-group_tasks]].
 9. Report the address and the note of each part.
 

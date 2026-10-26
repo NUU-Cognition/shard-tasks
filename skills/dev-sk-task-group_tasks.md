@@ -28,7 +28,7 @@ Make a task group for tasks that are done together, usually in one session, or c
    - Remove: `ops task group remove <group> <ref>...` (the tasks stay)
    - Delete: `ops task group delete <group>` (the tasks stay). Delete only when the person asks.
 4. **Read the task group.** `ops task group show <group> --json` gives its `address` (always), its tasks, `open`, and its attachments. `ops task group list --open` lists the open task groups. A task group is open while one of its tasks is open.
-5. **Pin the task group** when this session does its tasks: `flint orbh task pin <group address>` ([[dev-sk-task-pin_task]]). Each task of the task group then shows the session attachment.
+5. **Add the tasks** when this session does them: add each task of the task group as an object, `flint orbh objects add <task address> --subscribe` ([[dev-sk-task-use_task]]), at most 20 items. Do not add the task group: its object does not resolve.
 6. Report the address of the task group and its tasks.
 
 # Output

@@ -25,8 +25,8 @@
       "evidence": "required",
       "stage": "Stage 1: Task Creation",
       "next": {
-        "interactive": "Create the task with flint shard task task-new and a body file of the note, place it, pin its Ops address with flint orbh task pin, set doing, and run flint shard task task-sync. Then set the input to the field ops of the output of task-new: flint shard invocations set-input {{invocation}} task=<address>.",
-        "headless": "Set the phase creating-task. Create the task with flint shard task task-new and a body file of the note from the prompt, place it, pin its Ops address with flint orbh task pin, set doing, and run flint shard task task-sync. Then set the input to the field ops of the output of task-new: flint shard invocations set-input {{invocation}} task=<address>."
+        "interactive": "Create the task with flint shard task task-new and a body file of the note, place it, add its Ops address as an object with flint orbh objects add <address> --subscribe, set doing, and run flint shard task task-sync. Then set the input to the field ops of the output of task-new: flint shard invocations set-input {{invocation}} task=<address>.",
+        "headless": "Set the phase creating-task. Create the task with flint shard task task-new and a body file of the note from the prompt, place it, add its Ops address as an object with flint orbh objects add <address> --subscribe, set doing, and run flint shard task task-sync. Then set the input to the field ops of the output of task-new: flint shard invocations set-input {{invocation}} task=<address>."
       }
     },
     {

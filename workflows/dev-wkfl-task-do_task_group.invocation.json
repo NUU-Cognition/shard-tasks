@@ -19,12 +19,12 @@
       "next": "Read the task group with ops task group show --json, or make it with ops task group create. Read each task, and choose the order. For a new task group, set the input: flint shard invocations set-input {{invocation}} task=<address>."
     },
     {
-      "id": "pin",
-      "title": "Pin",
+      "id": "objects",
+      "title": "Task Objects",
       "by": "agent",
       "evidence": "required",
-      "stage": "Stage 2: Pin",
-      "next": "Pin the task group: flint orbh task pin {{task}}. Check the TASK line with flint orbh task show."
+      "stage": "Stage 2: Task Objects",
+      "next": "Add each task of {{task}} as an object: flint orbh objects add <task address> --subscribe (at most 20 items). Do not add the task group. Check the items with flint orbh objects list."
     },
     {
       "id": "work",
@@ -51,10 +51,10 @@
   ],
   "behaviours": [
     {
-      "id": "pin-hint",
+      "id": "objects-hint",
       "on": "invocation.open",
       "when": { "task": "set" },
-      "say": "Pin the task group before the first edit: flint orbh task pin {{task}}"
+      "say": "Add each task of {{task}} as an object before the first edit: flint orbh objects add <task address> --subscribe"
     },
     {
       "id": "task-missing",

@@ -1,5 +1,5 @@
 ---
-description: "Make or take a task group, pin the task group to the session, and do each task in it; each task is recorded and closed alone"
+description: "Make or take a task group, add each of its tasks to the session as an object, and do each task in it; each task is recorded and closed alone"
 ---
 
 > [!important] THIS FILE IS AN INSTRUCTION. WHEN REFERENCED IT IS MEANT TO BE TAKEN AS AN ACTION.
@@ -20,9 +20,9 @@ Do a set of tasks together in one session, through a task group. Each task stays
 
 You can run this workflow as a shard invocation. The invocation is a durable record of the run. The stages below do not change.
 
-- Start the workflow with `flint shard invoke task do_task_group --input task=<task group address>`. The input `task` holds the address of the task group (`@v1/<org>/taskgroup/<id>#ops`), as `flint orbh task pin` takes a task or a task group.
+- Start the workflow with `flint shard invoke task do_task_group --input task=<task group address>`. The input `task` holds the address of the task group (`@v1/<org>/taskgroup/<id>#ops`).
 - To make a new task group, give no input. After Stage 1, set the input: `flint shard invocations set-input <id> task=<task group address>`.
-- Mark each step when it is done: `flint shard step done <step> --evidence "<…>"`. The steps are `group`, `pin`, `work`, and `summary`. Outside an Orbh session, give `--invocation <id>` to `flint shard step`.
+- Mark each step when it is done: `flint shard step done <step> --evidence "<…>"`. The steps are `group`, `objects`, `work`, and `summary`. Outside an Orbh session, give `--invocation <id>` to `flint shard step`.
 - After Stage 4, close the invocation: `flint shard invocations close <id> --outcome done`.
 - When no invocation is open, follow the stages with no record.
 
@@ -45,19 +45,20 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 > [!headless]
 > - Set `flint orbh session set phase reading-task`, and `progress "0/<N> tasks"`.
 
-## Stage 2: Pin
+## Stage 2: Task Objects
 
-- Pin the task group: `flint orbh task pin <task group address>` ([[dev-sk-task-pin_task]]). Each task of the task group shows the session attachment.
-- Check the `TASK` line: `flint orbh task show`. It shows `group <title> · <n> tasks`.
+- Add each task of the task group as an object: `flint orbh objects add <task address> --subscribe` for each task ([[dev-sk-task-use_task]]). Do not add the task group: its object does not resolve.
+- A session holds at most 20 items. When the task group has more tasks, add the first tasks of the order. Remove a task when it is done (`flint orbh objects remove <id>`), and add the next task.
+- Check the items: `flint orbh objects list`. The Page shows each task in the `OBJECTS` block.
 - Set each task that you start to `doing`: `ops task start <ref>`, then `flint shard task task-sync <ref>`.
-- Once the pin is set, progress to the next stage.
+- Once the tasks are objects of the session, progress to the next stage.
 
 ## Stage 3: Each Task
 
 Do the tasks one at a time, in the order of Stage 1. For each task:
 
 1. Do the work. A step that serves the intent of this task is a subtask in Strike. Work for another task of the task group goes to that task.
-2. **WIP commits.** One commit holds the work of one task only. Follow [[dev-knw-task-dev]] § The WIP Commit Rule, with the short id of this task in the subject. The pin is the task group, so the trailer `Task:` names the task group: the subject names the task. For a `task.dev`, record each commit on this task after it: `ops task commit <ref> <sha> --repo <name>`. For an untyped task, do not run `ops task commit` (it refuses with `task_untyped`): name the commits in the result of this task.
+2. **WIP commits.** One commit holds the work of one task only. Follow [[dev-knw-task-dev]] § The WIP Commit Rule, with the short id of this task in the subject. For a `task.dev`, record each commit on this task after it: `ops task commit <ref> <sha> --repo <name>`. For an untyped task, do not run `ops task commit` (it refuses with `task_untyped`): name the commits in the result of this task.
 3. Tick the items of the definition of done in the task note of this task (a task with no note: give it one with `flint shard task task-new --ops <ref>`).
 4. Write the result of this task: `ops task result <ref> "<text>"`. For an untyped task, put each commit in it as `<sha> (<repo>)`.
 5. For a `task.dev`: set `ops task stage <ref> built --note "<the commits and the tests>"`.
@@ -86,5 +87,5 @@ Once each task is built, closed, or removed, progress to the next stage.
 
 # Output
 
-- A task group, pinned to the session, with each task done alone: its commits, its result, its stage, and its close
+- A task group whose tasks are objects of the session, with each task done alone: its commits, its result, its stage, and its close
 - The review command of each `task.dev` at `built`

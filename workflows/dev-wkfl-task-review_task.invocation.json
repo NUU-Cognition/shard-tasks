@@ -17,8 +17,8 @@
       "evidence": "required",
       "stage": "Stage 1: Verify",
       "next": {
-        "interactive": "Read {{task}} with ops task show --json, and its task note. Stop when this session set built: a session does not review its own work. Pin the task, check each item of the definition of done against reality, and give the findings to the person.",
-        "headless": "Set the phase reviewing. Read {{task}} with ops task show --json, and its task note. Stop when this session set built. Pin the task, and check each item of the definition of done against reality. Keep the findings for the body and the result."
+        "interactive": "Read {{task}} with ops task show --json, and its task note. Stop when this session set built: a session does not review its own work. Add the task as an object with flint orbh objects add {{task}} --subscribe, check each item of the definition of done against reality, and give the findings to the person.",
+        "headless": "Set the phase reviewing. Read {{task}} with ops task show --json, and its task note. Stop when this session set built. Add the task as an object with flint orbh objects add {{task}} --subscribe, and check each item of the definition of done against reality. Keep the findings for the body and the result."
       }
     },
     {

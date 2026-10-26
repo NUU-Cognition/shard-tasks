@@ -1,15 +1,15 @@
 ---
-description: "The commands of the task primitive: each verb of ops task and of flint orbh task, with one line each, the note scripts task-new, task-link, and task-sync, the refs, the JSON outputs, the limits, the pin keys, the production CLI ops, and a note on work on dev"
+description: "The commands of the task primitive: each verb of ops task with one line each, the note scripts task-new, task-link, and task-sync, the refs, the JSON outputs, the limits, the verbs of flint orbh objects for a task, the production CLI ops, and a note on work on dev"
 ---
 
 # Knowledge: The Task CLI
 
-This file lists each command of the task primitive v0.1: the verbs `ops task …` of the CLI `ops` (section C7 of the contract of Task 1287) the verbs `flint orbh task …` of the task pin (section C9), and the note scripts of Task 1291 (section N6). The model is in [[dev-knw-task-model]]. `ops task <verb> --help` and `flint orbh task <verb> --help` give each flag.
+This file lists each command of the task primitive v0.1: the verbs `ops task …` of the CLI `ops` (section C7 of the contract of Task 1287), the note scripts of Task 1291 (section N6), and the verbs `flint orbh objects …` that keep a task in an Orbh session (the Objects Protocol). The model is in [[dev-knw-task-model]]. `ops task <verb> --help` and `flint orbh objects <verb> --help` give each flag.
 
 ## The CLI ops
 
 - Use `ops` for task work: the production build on the PATH. Its data mode is always `prod` (the web app `https://ops.nuucognition.com`). `ops whoami` shows the data mode and the org.
-- `flint orbh task` runs the command in `NUU_OPS_CLI`, default `ops`. Leave `NUU_OPS_CLI` unset, so that the pin and the `ops` commands of the session use one deployment.
+- The note scripts run the command in `NUU_OPS_CLI`, default `ops`. Leave `NUU_OPS_CLI` unset, so that the scripts and the `ops` commands of the session use one deployment.
 - In this shard, `ops` means the production CLI.
 
 ### Work on Dev
@@ -17,7 +17,7 @@ This file lists each command of the task primitive v0.1: the verbs `ops task …
 Use the dev deployment only for work on Ops itself, for example a test of a new verb or a fix before its deploy. A task of dev does not exist on production: do not mix the two in one session.
 
 - The dev launcher is the file `apps/cli-ops/bin/ops.js` of the repository `main` (`ops-dev` inside the monorepo). It runs the dev build (`dist-dev/`), or the TypeScript source when there is no build or when `OPS_CLI_FORCE_SOURCE=1`. Its data mode is dev (the web app `http://localhost:3088`), unless `ops mode prod` or `OPS_DATA_MODE=prod` says otherwise.
-- Run each `ops` command of the session with the dev launcher, and set `NUU_OPS_CLI` to it, so that `flint orbh task` uses dev too. A value that names a file runs that file: `NUU_OPS_CLI="<repo main>/apps/cli-ops/bin/ops.js"`. Another value runs in `/bin/sh` with the arguments after it: `NUU_OPS_CLI="node <repo main>/apps/cli-ops/bin/ops.js"`.
+- Run each `ops` command of the session with the dev launcher, and set `NUU_OPS_CLI` to it, so that the note scripts use dev too. A value that names a file runs that file: `NUU_OPS_CLI="<repo main>/apps/cli-ops/bin/ops.js"`. Another value runs in `/bin/sh` with the arguments after it: `NUU_OPS_CLI="node <repo main>/apps/cli-ops/bin/ops.js"`.
 - Unset `NUU_OPS_CLI` again when the work on dev ends.
 
 ## Refs and Global Flags
@@ -27,7 +27,7 @@ Use the dev deployment only for work on Ops itself, for example a test of a new 
 - A `<ref>` of a task is a Convex id, an Ops address (`@v1/<org>/task/<id>#ops` or `@v1/<org>/task.dev/<id>#ops`), a URL of Ops, or a title. Use the address: a title can match more than one task. (The help of `update` and `start` says "ID, URL, or title", but both read an address too.)
 - A `<group>` is the Convex id, the address (`@v1/<org>/taskgroup/<id>#ops`), or the title of a task group.
 - The target of `attach` and `detach` is a task or a task group, by id or address. A title there names a task.
-- Give the address in a prompt, a pin, and an attachment. It names the org too.
+- Give the address in a prompt, an object verb, and an attachment. It names the org too.
 
 ## Create, Read, and Change
 
@@ -83,7 +83,7 @@ The Flint id is `flint.id` of `flint org show --json`.
 | `ops task attach <target> <kind> <ref2> [--session-id <id>] [--label <text>] [--state <state>]` | Attach a session, a fleet, a note, or a repository to a task or a task group. A second attach of the same row updates its label and its state. |
 | `ops task detach <target> <kind> <ref2>` | Detach the row. The row stays as history. |
 
-The `ref2` of a session is its session address: `@v1/<org>/session/<uuid>#flint/<slug>#<machine>`. `flint orbh task pin` writes this form.
+The `ref2` of a session is its session address: `@v1/<org>/session/<uuid>#flint/<slug>#<machine>`.
 
 ## Task Groups
 
@@ -105,7 +105,7 @@ The `ref2` of a session is its session address: `@v1/<org>/session/<uuid>#flint/
 - The same type and version is no change, and it writes no event.
 - A done task refuses with `task_type_done`. Reopen it first (`ops task reopen <ref>`), because a completed typed task needs a stage that can close.
 - A person and an agent can both change the type. The stage events stay as history. One undo restores the type, the stage, and the fields.
-- The address follows the type: `@v1/<org>/task/<id>#ops` becomes `@v1/<org>/task.dev/<id>#ops`, and `--none` gives `task/<id>` again. The old address still resolves to the task. Use the `address` of the output from then on. `flint orbh task show` refreshes a pin.
+- The address follows the type: `@v1/<org>/task/<id>#ops` becomes `@v1/<org>/task.dev/<id>#ops`, and `--none` gives `task/<id>` again. The old address still resolves to the task. Use the `address` of the output from then on. When the task is an object of the session, add the new address as an object, and remove the item of the old address.
 - When a task needs a type after its create, retype it. Do not make a new task for it.
 
 ## Task Types
@@ -187,19 +187,26 @@ A script never runs an Ops create two times: after an `address: null`, it reads 
 
 A write over a limit refuses with a code of [[dev-knw-task-model]] § Error Codes.
 
-## The Task Pin (Orbh)
+## The Task as an Object (Orbh)
+
+An Orbh session keeps a task in its context as an object of the Objects Protocol. The reference of each verb is `knw-foh-cli` § Objects of the Orbh shard, and the rules of a use are in its skill `sk-foh-use_object`. [[dev-sk-task-use_task]] gives the steps for a task.
 
 | Command | What it does |
 |---|---|
-| `flint orbh task pin <ref> [--org <slug>] [--no-sync]` | Pin a task or a task group to this session. It reads the ref in Ops, sets `core:task` and `core:task-info`, and attaches the session in Ops. `--org` gives the org of a plain id. `--no-sync` does not attach now (the pin is `sync pending`). A second pin moves the old pin to `previous` and keeps its Ops attachment. |
-| `flint orbh task unpin` | Clear `core:task`, and move the pin to `previous`. It makes no Ops call: the Ops attachment stays. |
-| `flint orbh task show [--json]` | Show the pin. When Ops answers, it reads the title, the status, the stage, and the current address again. |
-| `flint orbh task sync` | Attach the session in Ops again: retry a pending attach, send the current work state, and refresh the pin. |
+| `flint orbh objects add <task address> --subscribe` | Add the task to the session as an item. The mode `link` is the default: the session reads the task again at each turn boundary. `--subscribe` sends a message from `orbh:objects` when the task changes. It prints the block of the item, with its id (`ob-…`). |
+| `flint orbh objects list` | List the items: the id, the mode, the state, the version, and the address. |
+| `flint orbh objects show <id> [--full]` | Show the block of an item: a fresh read of the task, with its hold. |
+| `flint orbh objects get <task address> [--describe]` | Read the task one time, with no item. |
+| `flint orbh objects take <task address>` | Take the task: only this session changes it while the hold lasts. `chair` is the soft hold: the sessions that it answers with `share` change it too. |
+| `flint orbh objects return <task address>` | End the hold. |
+| `flint orbh objects request <task address> --note "<why>"` | Ask the holder for the hold, after a verb answered `held` (exit 9). |
+| `flint orbh objects remove <id>` | Remove the item when the work no longer needs the task. Its record stays as a tombstone. |
 
-- The pin reads the ref in Ops first. When Ops does not resolve the ref, the pin refuses (`Ops did not resolve <ref>`), and nothing changes. Check the ref with `ops task show <ref>`.
-- When only the attach fails, the pin is set with `sync: "pending"`, and the command prints the retry command `flint orbh task sync`.
-- `core:task` holds the address of the pinned task or task group.
-- **A task after an undo.** An undo of the delete of a task can give the task a new id. Ops records the move, so `ops task show <old address> --json` gives the task with its new canonical address. `flint orbh task show` or `flint orbh task sync` then updates the pin (both keys) to the new address. Use the new address from then on.
-- `core:task-info` holds JSON: `kind` (`task` or `taskgroup`), `address`, `org`, `id`, `title`, `status`, `stage`, `tasks` (the count of a task group), `pinnedAt`, `sync` (`done` or `pending`), and `previous` (the earlier pins).
-- The Page shows one line for a pin: `TASK  <title> · <status>[ · <stage>] · <address>[ · sync pending]`, or `TASK  group <title> · <n> tasks · <address>`.
-- A commit in a session with a pin gets the trailer `Task: <address>` from the hook (hook v2, with `Orbh-Fleet` and `Orbh-Session`). With a task group pin, the trailer names the task group: the subject of the commit names the task.
+- A session holds at most 20 items. Add each task that the work uses.
+- **A task group.** Do not add the task group: its object does not resolve. Add each task of the task group as an object (at most 20 items).
+- Take or chair the task only for a change that must not collide (a series of mesh writes, a stage change), and return it after the change. A hold is a lease (600 s by default). Orbh renews each hold while the session lives, and returns it at the end of the session.
+- When a verb answers `held` (exit 9), another actor holds the task. Send a `request`, and do not get around the hold.
+- The Page shows each item in the `OBJECTS` block. A changed task shows its full block with `state: changed`. A hold shows in the part `Holds (<n>)`.
+- A dispatcher gives a task to a new session at the launch: `flint orbh launch … --object <task address>=subscribe`.
+- **A task after an undo.** An undo of the delete of a task can give the task a new id. Ops records the move, so `ops task show <old address> --json` gives the task with its new canonical address. Add the new address as an object, and remove the item of the old address. Use the new address from then on.
+- The commit hook adds the trailers `Orbh-Fleet` and `Orbh-Session`. The subject of the commit names the task.

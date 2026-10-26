@@ -30,7 +30,7 @@ Merge tasks that have one intent (for example, two tasks for the same fault) int
 
    Then sync each note: `flint shard task task-sync <address>` for the survivor and for each merged task (an open one becomes `superseded`). Add a `# Task Log` line in each merged note with the survivor.
 5. **Join the fields.** When the survivor is a `task.dev`, add the WIP commits of the merged tasks to it: `ops task commit <survivor> <sha> --repo <name>` for each. When the survivor is untyped, `ops task commit` refuses (`task_untyped`): name the commits in its result.
-6. **Pin again.** When the session pinned a merged task, pin the survivor: `flint orbh task pin <survivor address>`.
+6. **Add the survivor.** When a merged task is an object of the session, add the survivor as an object (`flint orbh objects add <survivor address> --subscribe`), and remove the item of the merged task (`flint orbh objects remove <id>`).
 7. Report the address and the note of the survivor and of each merged task.
 
 # Output

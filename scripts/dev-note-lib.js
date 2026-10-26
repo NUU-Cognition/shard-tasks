@@ -12,7 +12,7 @@
 // - Node built-ins only. The note edits use task-lib (the copy of the Projects task-lib): a lock for each note, no
 //   symbolic link, and the strict YAML subset. Each Ops call and each flint call runs before the lock of the note.
 // - `<ops>` is NUU_OPS_CLI, default `ops`. A value that names a file runs that file; another value runs in /bin/sh
-//   with the arguments after it (the rule of `flint orbh task`).
+//   with the arguments after it.
 // - An output never shows the value of NUU_OPS_CLI, and never shows the raw output of `<ops>`: a launcher in the shell
 //   form can hold a credential. A failure of `<ops>` gives the code, the message, and the hints of its JSON error
 //   document; with NUU_OPS_CLI in the shell form, only the code. In the shell form, the message text of an error or a

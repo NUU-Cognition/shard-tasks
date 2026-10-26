@@ -6,14 +6,14 @@ required-reading:
 
 # Tasks
 
-The Tasks shard gives agents one way to work with the tasks of NUU Operations (Ops). Each task that the shard makes has two parts, linked both ways: a task note in this Flint holds the content, and an Ops task holds the state. Orbh sessions, Strike, and Trident attach to the Ops task.
+The Tasks shard gives agents one way to work with the tasks of NUU Operations (Ops). Each task that the shard makes has two parts, linked both ways: a task note in this Flint holds the content, and an Ops task holds the state. Strike and Trident attach to the Ops task. An Orbh session keeps the Ops task in its context as an object of the Objects Protocol.
 
 ## Required Reading
 
 | File | Why |
 |---|---|
 | [[dev-knw-task-model]] | The model: the terms, the fields, the status, the stages, the close rules, lineage, task groups, and placement |
-| [[dev-knw-task-cli]] | Each command of `ops task`, `flint orbh task`, and the scripts `task-new`, `task-link`, and `task-sync` |
+| [[dev-knw-task-cli]] | Each command of `ops task`, the scripts `task-new`, `task-link`, and `task-sync`, and the verbs of `flint orbh objects` for a task |
 
 Read [[dev-knw-task-dev]] too before you work on a `task.dev`.
 
@@ -35,7 +35,7 @@ Read [[dev-knw-task-dev]] too before you work on a `task.dev`.
 | related | A link from a task to a project, a deliverable, a repository, a Flint, or a v1 address. 0 or more. |
 | unplaced | A task with no home. A normal state. |
 | attachment | A link from a task or a task group to a session, a fleet, a note, or a repository. |
-| task pin | The Orbh session keys `core:task` and `core:task-info`. |
+| task object | An Ops task in the context of an Orbh session: an item of the Objects Protocol (`flint orbh objects add <address> --subscribe`). The Page shows it in the `OBJECTS` block. |
 
 The full model is in [[dev-knw-task-model]], and each command is in [[dev-knw-task-cli]].
 
@@ -51,34 +51,34 @@ Each task that this shard makes has two parts, linked both ways:
 - **Make each task with `task-new`:** `flint shard task task-new "<title>" …`. It writes the note, makes the Ops task, and links both. Do not make an Ops task alone with `ops task create`, and do not write a task note by hand.
 - **Ops owns the state.** Ops owns the status, the stage, and the outcome. `flint shard task task-sync <ref>` copies them (and the type) into the note, in one direction only. Do not edit `status`, `stage`, `task-type`, `completed`, or `ops` of the note by hand: change the Ops task, then run `task-sync`.
 - **A task with no note.** A task that a person makes in the web, or that Strike makes, has no note and keeps its body. Give it a note with `flint shard task task-new --ops <ref>`. Link a note that exists with `flint shard task task-link "<(Task) N Title>" [--ops <ref>]`.
-- **The Ops address stays the key.** The pin, the invocation input `task`, the attachments, and the commit trailer use the Ops address. Ops shows the note as "Open in Obsidian".
+- **The Ops address stays the key.** The task object, the invocation input `task`, and the attachments use the Ops address. Ops shows the note as "Open in Obsidian".
 - Ops holds all views of tasks. The Flint has no task dashboard of this shard.
 - To keep another Mesh note with a task (a notepad, a report), attach it: `ops task attach <ref> note "<Mesh path>"`.
 - The Projects shard does not change: its workflows make task notes with no Ops task. Do not mix the two shards on one task.
 
 ## The Hard Rule
 
-**Before work that changes a file or makes an artifact, the session pins a task or a task group:**
+**Before work that changes a file or makes an artifact, the session adds the task as an object:**
 
 ```bash
-flint orbh task pin <ref>
+flint orbh objects add <task address> --subscribe
 ```
 
-- When no task fits the work, create one with `task-new` ([[dev-wkfl-task-create_task]], or [[dev-wkfl-task-create_and_do_task]] to create and do it). Then pin its Ops address.
-- Check the pin with `flint orbh task show`. The Page of the session shows the `TASK` line.
-- Reading, research with no artifact, and an answer in the conversation need no pin.
-- A session pins one task or one task group at a time. A second pin moves the old pin to `previous`, and the old Ops attachment stays. So a session can do two tasks one after the other, or many tasks at one time through a task group.
-- When you dispatch a subagent for the pinned work, put the address of the task in the prompt. The subagent pins the same address.
-- The pin reads the task in Ops first. When Ops does not resolve the ref, the pin refuses and changes nothing: check the ref with `ops task show <ref>`.
-- When only the attach in Ops fails, the pin is set as `sync pending`. Continue the work, and run `flint orbh task sync` later.
-- `flint orbh task unpin` makes no Ops call: the Ops attachment stays.
+- The mode `link` is the default: the session reads the task again at each turn boundary. `--subscribe` sends a message from `orbh:objects` when the task changes.
+- When no task fits the work, create one with `task-new` ([[dev-wkfl-task-create_task]], or [[dev-wkfl-task-create_and_do_task]] to create and do it). Then add its Ops address as an object.
+- Check the items with `flint orbh objects list`, and read one with `flint orbh objects show <id>`. The Page of the session shows each item in the `OBJECTS` block. A changed task shows its full block with `state: changed`.
+- Reading, research with no artifact, and an answer in the conversation need no object.
+- A session can hold up to 20 items. Add each task that the work uses. For a task group, add each task of the task group: the object of a task group does not resolve. Remove a task with `flint orbh objects remove <id>` when the work no longer needs it.
+- **Take the task only for a change that must not collide** with another session, for example a series of mesh writes or a stage change: `flint orbh objects take <task address>` (or `chair`). Return it after the change: `flint orbh objects return <task address>`. Orbh renews a hold while the session lives, and returns it at the end of the session. The Page shows a hold in the part `Holds` of the `OBJECTS` block.
+- **When a verb answers `held` (exit 9),** another actor holds the task. Send a request: `flint orbh objects request <task address> --note "<why>"`. Do not get around the hold.
+- When you dispatch a subagent for this work, put the address of the task in the prompt. The dispatcher can give the task at the launch: `flint orbh launch … --object <task address>=subscribe`.
 
-[[dev-sk-task-pin_task]] gives the steps.
+[[dev-sk-task-use_task]] gives the steps. The rules of a use of an object are in the skill `sk-foh-use_object` of the Orbh shard.
 
 ## Task or Subtask
 
-- When new work serves the intent of the pinned task, it is a **subtask** of that task: a Strike target mounted on the Ops task. It is not a new task.
-- When the work does not serve that intent, it is a **new task**. Create it, or pin the task that fits.
+- When new work serves the intent of a task object of the session, it is a **subtask** of that task: a Strike target mounted on the Ops task. It is not a new task.
+- When the work does not serve that intent, it is a **new task**. Create it, or add the task that fits as an object.
 - Ops does not show subtasks. Strike shows the subtasks and the steps of a task.
 
 ## Placement
@@ -129,13 +129,13 @@ todo → doing → done (completed | dropped | superseded)
 - A `task.dev` closes with `completed` at `reviewed` or at `verified`. Ops shows `done · Reviewed` or `done · Verified`.
 - **The type can change (rule C4.8).** `ops task retype <ref> task.dev` or `ops task retype <ref> --none`, on a task that is not done (a done task refuses with `task_type_done`). The stage and the fields stay only when the new type defines them. The address follows the type, and the old address still resolves. When a task needs a type after its create, retype it: do not make a new task.
 - Remove a WIP commit with `ops task field <ref> wipCommits "<item>" --remove`, never with a `set` of the whole list.
-- **WIP commits.** Pin the task before the first edit. Commit only your paths on the machine branch, with the subject `[OR] wip: <Flint name>/Task <short id> <what changed>` (the short id is the first 8 characters of the Ops id). The hook adds the trailer `Task: <address>` from the pin (with a task group pin, it names the task group). After each commit, record it: `ops task commit <ref> <sha> --repo <name>`. Only a type with the field `wipCommits` (`task.dev`) takes `ops task commit`. An untyped task refuses it with `task_untyped`: name its commits in its result. Ops holds the commits: the field `wip-commits` of the note stays empty.
+- **WIP commits.** Add the task as an object before the first edit. Commit only your paths on the machine branch, with the subject `[OR] wip: <Flint name>/Task <short id> <what changed>` (the short id is the first 8 characters of the Ops id). The hook adds the trailers `Orbh-Fleet` and `Orbh-Session`: the subject names the task. After each commit, record it: `ops task commit <ref> <sha> --repo <name>`. Only a type with the field `wipCommits` (`task.dev`) takes `ops task commit`. An untyped task refuses it with `task_untyped`: name its commits in its result. Ops holds the commits: the field `wip-commits` of the note stays empty.
 
 ## The CLI ops
 
-Use `ops` (production) for task work. Ops production has the task primitive, and the production `ops` has each verb of this shard. `flint orbh task` runs `ops` by default, so leave `NUU_OPS_CLI` unset. The web app is `https://ops.nuucognition.com`. In this shard, `ops` means the production CLI.
+Use `ops` (production) for task work. Ops production has the task primitive, and the production `ops` has each verb of this shard. The scripts of this shard run `ops` by default, so leave `NUU_OPS_CLI` unset. The web app is `https://ops.nuucognition.com`. In this shard, `ops` means the production CLI.
 
-Use the dev deployment only for work on Ops itself, for example a test of a new verb before its deploy. Then the pin and each `ops` command use the dev launcher: [[dev-knw-task-cli]] § Work on Dev.
+Use the dev deployment only for work on Ops itself, for example a test of a new verb before its deploy. Then the scripts and each `ops` command use the dev launcher: [[dev-knw-task-cli]] § Work on Dev.
 
 ## Scripts
 
@@ -194,17 +194,17 @@ A headless or subagent Orbh session has no person at the terminal. It loads this
 |---|---|
 | [[dev-wkfl-task-create_task]] | Make a `todo` task, place it with the hint rule, and scope it |
 | [[dev-wkfl-task-scope_task]] | Research first, then write the scope into the task note, and set `scoped` |
-| [[dev-wkfl-task-do_task]] | Pin, work, record the WIP commits, set `built`, give a summary, then review |
-| [[dev-wkfl-task-create_and_do_task]] | Create, pin, and do a task in one run |
+| [[dev-wkfl-task-do_task]] | Add the task as an object, work, record the WIP commits, set `built`, give a summary, then review |
+| [[dev-wkfl-task-create_and_do_task]] | Create a task, add it as an object, and do it in one run |
 | [[dev-wkfl-task-review_task]] | A second session checks the work against the task note, and sets `reviewed` or writes the findings |
-| [[dev-wkfl-task-do_task_group]] | Make or take a task group, pin it, and do each task in it |
+| [[dev-wkfl-task-do_task_group]] | Make or take a task group, add each of its tasks as an object, and do each task in it |
 
 ## Skills
 
 | Skill | Purpose |
 |---|---|
 | [[dev-sk-task-capture_as_task]] | Record work that is already done as a task |
-| [[dev-sk-task-pin_task]] | Pin a task or a task group to this session |
+| [[dev-sk-task-use_task]] | Keep a task in the session as an object: add it, read it, take it, return it, and remove it |
 | [[dev-sk-task-place_task]] | Apply the placement rule with the hints |
 | [[dev-sk-task-split_task]] | Split a task into new parts |
 | [[dev-sk-task-merge_tasks]] | Merge tasks into one survivor |
@@ -218,7 +218,7 @@ A headless or subagent Orbh session has no person at the terminal. It loads this
 | Knowledge | Purpose |
 |---|---|
 | [[dev-knw-task-model]] | The model: C0 to C4 of the contract |
-| [[dev-knw-task-cli]] | Each verb of `ops task` and `flint orbh task` |
+| [[dev-knw-task-cli]] | Each verb of `ops task`, the note scripts, and the verbs of `flint orbh objects` for a task |
 | [[dev-knw-task-dev]] | `task.dev@0.1`: the fields, the stages, and the WIP commit rule |
 
 ## Templates

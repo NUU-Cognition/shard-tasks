@@ -34,7 +34,7 @@ Close a task with the correct outcome, and write its result.
 4. **Close.** Run `ops task close <ref> --outcome <outcome> --result "<result>"`. (`ops task done <ref>` is the same as `--outcome completed`, with no result.)
 5. **Sync the note.** After the close, run `flint shard task task-sync <ref>`: the note gets `done`, `deprecated`, or `superseded`, and the date. Add a `# Task Log` line with the result.
 6. **When the close refuses** with `task_stage_not_closable`, do not change the stage to pass the check. Report the stage, and say what comes next (the review, or the verify of a person).
-7. **After the close.** Keep the pin: the next `flint orbh task pin` moves it to `previous`. A chain shows the next task as ready.
+7. **After the close.** Keep the task object while the session reports on the task. Remove it with `flint orbh objects remove <id>` when the work no longer needs it. A chain shows the next task as ready.
 8. **Reopen.** When a done task needs more work in the same scope, the person can ask for `ops task reopen <ref>`: it sets `doing`, clears the outcome, and keeps the stage. Then run `flint shard task task-sync <ref>`. For new scope, use [[dev-sk-task-continue_task]].
 
 # Output
