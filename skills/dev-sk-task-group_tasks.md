@@ -17,7 +17,7 @@ Make a task group for tasks that are done together, usually in one session, or c
 
 # Actions
 
-1. **Check the shape.** A task group keeps each task as a full task: its own home, status, stage, and result. Tasks with one intent are a merge ([[dev-sk-task-merge_tasks]]). Tasks in an order are a chain ([[dev-sk-task-chain_tasks]]). Many sessions on one task are a fleet, not a task group.
+1. **Check the shape.** A task group keeps each task as a full task: its own home, status, and result. Tasks with one intent are a merge ([[dev-sk-task-merge_tasks]]). Tasks in an order are a chain ([[dev-sk-task-chain_tasks]]). Many sessions on one task are a fleet, not a task group.
 2. **Make the task group.**
    ```bash
    ops task group create "<title>" --task <ref> [--task <ref> ...] [--body "<text>"] --json

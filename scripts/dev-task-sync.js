@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 // task-sync of the Tasks shard (Task 1291, contract N6): copy the state of the Ops task into its task note, in one
-// direction only. Ops owns the status, the stage, the type, and the outcome.
+// direction only. Ops owns the status, the outcome, and the result. Ops has no task types and no stages.
 // Invocation: flint shard task task-sync "<(Task) N Title>" (or the Ops address of the task: its field note names the note)
 // It reads `<ops> task show <ops of the note> --json`, and writes into the note:
 // - `status`: todo → todo; doing → in-progress; an open task with the flag blocked (any value that is set) → blocked;
 //   done with the outcome completed (or no outcome) → done, dropped → deprecated, superseded → superseded;
-// - `stage` and `task-type`: the copy (empty for an untyped task);
 // - `completed`: the date of the close when the task is done, else empty;
-// - `ops`: the current Ops address (a type change or an undo can move it).
-// A change of the status or the stage adds one Task Log line. A note with no `ops` is a refusal that names task-link.
-// Output: one JSON document { number, title, path, ops, status, stage, type, changed, noteLinked }.
+// - `ops`: the current Ops address (an undo, or an old address task.dev/<id> of a task type of before, can move it).
+// It clears the old fields `task-type` and `stage` (of the task types of before) when they have a value: the lines
+// stay with no value. A note with no such field gets none.
+// A change of the status adds one Task Log line. A note with no `ops` is a refusal that names task-link.
+// Output: one JSON document { number, title, path, ops, status, changed, noteLinked }.
 
 const fs = require('fs');
 const path = require('path');
@@ -55,8 +56,6 @@ n.run('task-sync', (argv) => {
     path: path.relative(root, found.file),
     ops: next.ops,
     status: next.status,
-    stage: next.stage || null,
-    type: next['task-type'] || null,
     changed,
     noteLinked,
   });

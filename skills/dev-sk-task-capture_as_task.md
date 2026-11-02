@@ -18,24 +18,20 @@ Record the recent work of the session as a task in Ops, when the work started wi
 # Actions
 
 1. **Check for a task first.** When an open task already has this intent, do not create a task: add it as an object ([[dev-sk-task-use_task]]), and record the work on it. Use `ops task search "<words of the title>" --json` and `ops task hints --text "<title>"` to find it.
-2. **Choose the type.** Use `task.dev` when the work changed code in a repository. Else use the base type (no `--type`). When step 1 found an untyped task and the work changed code, retype it: `ops task retype <address> task.dev --json`, then set its repository (`ops task field <address> repo <name>` and `ops task relate <address> repo <name>`). Use the `address` of the output from then on. Do not make a new task for it. Then go to step 5.
+2. **A repository.** When the work changed code in a repository, the task gets a `repo` link: give `--repo <name>` to `task-new` in step 3. A task that step 1 found does not need steps 3 to 5: add the link to it (`ops task relate <address> repo <name>`), and go to step 6.
 3. **Create the task.** Write the body of the task note to a temporary file outside the Mesh: `# Context`, `# Task Description`, `# Task Requirements`, `# Definition of Done` (ticked, as the work was done), `# Task Log`, and `# Notes`, with no frontmatter (see [[dev-knw-task-model]] § The Task Note). Then create the task with its note:
    ```bash
-   flint shard task task-new "<title>" [--type task.dev --repo <name>] [--org <org>] --body-file <file>
+   flint shard task task-new "<title>" [--repo <name>] [--org <org>] --body-file <file>
    ```
    Keep the field `ops` of the output (the Ops address, `<address>` below). When `ops` is `null`, the note exists and the Ops part failed: fix the cause, then run the command of `next`. Never run `task-new` again for the same work.
 4. **Place it** with [[dev-sk-task-place_task]].
 5. **Add it as an object**: `flint orbh objects add <address> --subscribe`.
-6. **Record the commits.**
-   - `task.dev`: for each commit of the work, run `ops task commit <address> <sha> --repo <name>`.
-   - Untyped task (also a task that exists from step 1): do not run `ops task commit`. An untyped task has no field `wipCommits`, so the command refuses with `task_untyped`. Name the commits in the result in step 7, as `<sha> (<repo>)`.
-7. **Set the state.**
-   - `task.dev`: set `ops task stage <address> built --note "<summary>"`. Do not close it: a review sets `reviewed` first ([[dev-wkfl-task-review_task]]).
-   - Untyped task: write the result with the commits (`ops task result <address> "<summary>. Commits: <sha> (<repo>), …"`). Close it with `completed` when the person confirms ([[dev-sk-task-close_task]]). In a headless session, close it only when the prompt says so.
+6. **Record the commits.** Name each commit of the work in the result in step 7, as `<sha> (<repo>)` ([[dev-knw-task-commits]]).
+7. **Set the state.** Write the result with the commits: `ops task result <address> "<summary>. Commits: <sha> (<repo>), …. Session: <ORBH_SESSION_ID>"`. A task that exists from step 1 keeps the text of its result of before. Close the task with `completed` when the person confirms ([[dev-sk-task-close_task]]), or leave it open for a review ([[dev-wkfl-task-review_task]]). In a headless session, close it only when the prompt says so.
 8. **Copy the state into the note:** `flint shard task task-sync <address>` (also after a close).
 9. Report the address, the note, the place, the commits, and the state to the person (or in the result).
 
 # Output
 
 - A task note and an Ops task, linked both ways, with the work, its place, and its commits; the task is an object of the session
-- A `task.dev` at `built`, or an untyped task with its result (closed when confirmed)
+- The task with its result, which names the commits (closed when confirmed)

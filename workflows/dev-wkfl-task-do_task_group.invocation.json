@@ -33,8 +33,8 @@
       "evidence": "required",
       "stage": "Stage 3: Each Task",
       "next": {
-        "interactive": "Do the tasks of {{task}} one at a time. Record each commit on its own task: with ops task commit for a task.dev, in the result for an untyped task. Write its result, set built for a task.dev, run flint shard task task-sync on it, and close each task alone when it can close.",
-        "headless": "Set the phase implementing. Do the tasks of {{task}} one at a time, and keep the progress current. Record each commit on its own task: with ops task commit for a task.dev, in the result for an untyped task. Write its result, set built for a task.dev, and run flint shard task task-sync on it."
+        "interactive": "Do the tasks of {{task}} one at a time. Write the result of each task with its own commits and the session, run flint shard task task-sync on it, and close each task alone when the person confirms.",
+        "headless": "Set the phase implementing. Do the tasks of {{task}} one at a time, and keep the progress current. Write the result of each task with its own commits and the session, and run flint shard task task-sync on it."
       }
     },
     {
@@ -44,7 +44,7 @@
       "evidence": "required",
       "stage": "Stage 4: Summary and Review Handoff",
       "next": {
-        "interactive": "Give the person a summary of each task, and the review_task command of each task.dev at built. Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
+        "interactive": "Give the person a summary of each task, and the review_task command of each open task. Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
         "headless": "Set the phase complete. Close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the summary of each task and each review_task command in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
       }
     }

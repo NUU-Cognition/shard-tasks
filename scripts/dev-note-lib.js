@@ -6,7 +6,8 @@
 // - the task note in the Flint (Mesh/Types/Tasks/(Task) <n> <title>.md, the template tmp-proj-task-v0.2), which holds
 //   the content and the field `ops` (the address of the Ops task);
 // - the Ops task, which holds the state and the field `note` (the address of the task note).
-// Ops owns the status, the stage, and the outcome. task-sync copies them into the note, in one direction only.
+// Ops owns the status, the outcome, and the result. task-sync copies the status and the date of the close into the
+// note, in one direction only. Ops has no task types and no stages.
 //
 // The rules:
 // - Node built-ins only. The note edits use task-lib (the copy of the Projects task-lib): a lock for each note, no
@@ -40,7 +41,10 @@ const CALL_TIMEOUT_MS = 60000;
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 /** The note address of N1: `@v1/<org>/task/<note id>#flint/<flint>`, with an org. */
 const NOTE_ADDRESS = new RegExp(`^@v1/[^/#\\s]+/task/${UUID}#flint/[^/#\\s]+$`, 'i');
-/** An Ops task address: `@v1/<org>/task/<id>#ops` or `@v1/<org>/task.<subtype>/<id>#ops`. */
+/**
+ * An Ops task address: `@v1/<org>/task/<id>#ops`. The old form `@v1/<org>/task.<subtype>/<id>#ops` (task.dev, from the
+ * task types of before) still resolves, and an old note can hold it in its field `ops`.
+ */
 const OPS_ADDRESS = /^@v1\/[^/#\s]+\/task(?:\.[a-z][a-z0-9]*)?\/[^/#\s]+#ops$/;
 /** The title of a task note: `(Task) <n> <name>`. */
 const NOTE_TITLE = /^\(Task\) (\d+) (.+)$/;
@@ -261,10 +265,9 @@ const REFUSAL_CODES = new Set([
   'usage', 'auth_required', 'unauthenticated', 'subsection_route_unknown',
   'agent_invalid_input', 'agent_unknown_operation', 'agent_wrong_endpoint', 'agent_mark_unsupported', 'fleet_actor_invalid',
   'org_unauthorized', 'org_frozen',
-  'task_note_invalid', 'task_body_too_large', 'task_field_invalid', 'task_type_unknown', 'task_unplaced_with_home',
+  'task_note_invalid', 'task_body_too_large', 'task_unplaced_with_home',
   'task_folder_in_subsection', 'task_subsection_required', 'task_deliverable_required', 'task_project_required',
-  'task_project_mismatch', 'deliverable_project_mismatch', 'invalid_rarity', 'subsection_blocked', 'task_stage_unknown',
-  'task_stage_forbidden',
+  'task_project_mismatch', 'deliverable_project_mismatch', 'invalid_rarity', 'subsection_blocked',
 ]);
 const REFUSAL_REF = /^(?:org|member|user|record|project|deliverable|subsection|backlog_folder|task|task_group)_(?:not_found|ambiguous)$/;
 
@@ -432,8 +435,6 @@ function readNote(root, file) {
   return {
     id: lib.getScalar(doc, 'id'),
     ops: lib.getScalar(doc, 'ops'),
-    type: lib.getScalar(doc, 'task-type'),
-    stage: lib.getScalar(doc, 'stage'),
     status: lib.getScalar(doc, 'status'),
     completed: lib.getScalar(doc, 'completed'),
   };
@@ -442,8 +443,6 @@ function readNote(root, file) {
 /** The keys after which a new field of the note goes, in order of preference. */
 const FIELD_AFTER = {
   ops: ['priority', 'completed', 'status'],
-  'task-type': ['ops', 'priority', 'completed', 'status'],
-  stage: ['task-type', 'ops', 'priority', 'completed', 'status'],
   status: ['tags'],
   completed: ['due', 'from', 'status'],
 };
@@ -592,36 +591,37 @@ function dateOf(ms) {
 }
 
 /**
- * The state of an Ops task as the fields of its note (N6): `ops` (the current address), `status`, `stage` and
- * `task-type` (empty for an untyped task), and `completed` (the date of the close when the task is done, else empty).
- * An unknown status is a refusal: compute the state before any write.
+ * The state of an Ops task as the fields of its note (N6): `ops` (the current address), `status`, and `completed` (the
+ * date of the close when the task is done, else empty). Ops has no task types and no stages. An unknown status is a
+ * refusal: compute the state before any write.
  */
 function opsState(shown) {
   const task = shown.task;
-  const typed = typeof task.type === 'string' && task.type !== '' && task.type !== 'task';
   return {
     ops: shown.address,
     status: noteStatus(task),
-    stage: typed && typeof task.stage === 'string' ? task.stage : '',
-    'task-type': typed ? task.type : '',
     completed: task.checkbox === 'done' ? dateOf(task.completedAt) : '',
   };
 }
 
 /**
- * Write the state of an Ops task (from opsState) into a note that is open under its lock. A completed date that a
- * person wrote stays while the task is done. A change of the status or the stage adds one Task Log line. Returns the
- * fields that changed. `state` gets the values that the note has after the write.
+ * The fields of the task types of before. Ops has no task types and no stages now, so a note never holds a value in
+ * them: writeState clears a value (the line stays, with no value), and it never adds the field.
+ */
+const OLD_FIELDS = ['task-type', 'stage'];
+
+/**
+ * Write the state of an Ops task (from opsState) into a note that is open under its lock, and clear the OLD_FIELDS. A
+ * completed date that a person wrote stays while the task is done. A change of the status adds one Task Log line.
+ * Returns the fields that changed (a cleared old field too). `state` gets the values that the note has after the write.
  */
 function writeState(doc, state, script) {
-  const old = { status: lib.getScalar(doc, 'status'), stage: lib.getScalar(doc, 'stage') };
+  const old = { status: lib.getScalar(doc, 'status') };
   if (state.completed !== '' && lib.getScalar(doc, 'completed') !== '') state.completed = lib.getScalar(doc, 'completed');
-  const fields = ['ops', 'status', 'task-type', 'stage', 'completed'].filter((key) => setField(doc, key, state[key]));
-  if (fields.includes('status') || fields.includes('stage')) {
-    const parts = [];
-    if (fields.includes('status')) parts.push(`status ${old.status || 'none'} → ${state.status}`);
-    if (fields.includes('stage')) parts.push(`stage ${old.stage || 'none'} → ${state.stage || 'none'}`);
-    lib.appendTaskLog(doc, `- ${lib.today()}: Ops state: ${parts.join(', ')} (${provenance(script)}).`);
+  const fields = ['ops', 'status', 'completed'].filter((key) => setField(doc, key, state[key]));
+  fields.push(...OLD_FIELDS.filter((key) => setField(doc, key, '')));
+  if (fields.includes('status')) {
+    lib.appendTaskLog(doc, `- ${lib.today()}: Ops state: status ${old.status || 'none'} → ${state.status} (${provenance(script)}).`);
   }
   return fields;
 }

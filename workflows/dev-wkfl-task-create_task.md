@@ -1,5 +1,5 @@
 ---
-description: "Make a todo task for later work with task-new (a task note and an Ops task, linked both ways), place it with the hint rule, refine it with the person, and set scoped for a task.dev"
+description: "Make a todo task for later work with task-new (a task note and an Ops task, linked both ways), place it with the hint rule, and refine it with the person"
 ---
 
 > [!important] THIS FILE IS AN INSTRUCTION. WHEN REFERENCED IT IS MEANT TO BE TAKEN AS AN ACTION.
@@ -28,7 +28,7 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 # Input
 
 - The context of the work: what must change, and why
-- (Optional) The type: `task.dev` for work that changes code in a repository, with the repository name
+- (Optional) The repository name, for work that changes code in a repository
 - (Optional) A place, a priority, or a task group that the person gives
 
 # Actions
@@ -37,11 +37,11 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 
 - Look before you create. Find an open task with the same intent: `ops task search "<words of the title>" --json` (check the status of each match), and `ops task hints --text "<title>"`. When one exists, do not create a second task: give its address to the person, and stop.
 - Choose a concrete title that says what the task will do.
-- Choose the type. Use `task.dev` (with `--repo <name>`) for work that changes code in a repository. Else use no type. When a task that exists has the wrong type, do not create a second task: change its type with `ops task retype <address> <type>` (or `--none`).
+- For work that changes code in a repository, give `--repo <name>`: it adds the `repo` related link.
 - Write the body of the task note to a temporary file outside the Mesh: the sections `# Context`, `# Task Description`, `# Task Requirements`, `# Definition of Done` (checkboxes that a reviewer can check), `# Task Log`, and `# Notes` of the template `tmp-proj-task-v0.2`, with no frontmatter. See [[dev-knw-task-model]] § The Task Note.
 - Create the task with `task-new`. It writes the note, makes the Ops task with no body (unplaced: Stage 2 places it), and links both:
   ```bash
-  flint shard task task-new "<title>" [--type task.dev --repo <name>] [--org <org>] --body-file <file>
+  flint shard task task-new "<title>" [--repo <name>] [--org <org>] --body-file <file>
   ```
 - Keep the `ops` (the Ops address) and the `path` (the note) of the output. When the output has `ops: null`, the note exists and the Ops part failed: fix the cause, then run the command of `next` (`task-link`). Never run `task-new` again for the same task.
 - With an open invocation, set the input: `flint shard invocations set-input <id> task=<ops address>`.
@@ -50,7 +50,7 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 
 > [!headless]
 > - Set `flint orbh session set phase creating-task`.
-> - The context, the type, and the place come from the prompt, not from a person.
+> - The context, the repository, and the place come from the prompt, not from a person.
 
 ## Stage 2: Placement
 
@@ -60,8 +60,8 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 
 ## Stage 3: Task Review
 
-- Give the person the title, the type, the place, and the task note.
-- Converse to refine the task. Write each change of the content into the task note. A new title changes both parts: `flint helper rename "<old note title>" "<new title>"` and `ops task update <address> --title "<new title>"`. When the type must change, use `ops task retype <address> <type>` (or `--none`), use the `address` of its output from then on, and run `flint shard task task-sync <address>`. A new type keeps only the stage and the fields that it defines.
+- Give the person the title, the place, and the task note.
+- Converse to refine the task. Write each change of the content into the task note. A new title changes both parts: `flint helper rename "<old note title>" "<new title>"` and `ops task update <address> --title "<new title>"`.
 - Once the person confirms the task, progress to the next stage.
 
 > [!headless]
@@ -72,7 +72,6 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 ## Stage 4: Finalise
 
 - Set the priority when the person gave one: `ops task update <address> --priority <low|medium|high|urgent>`.
-- For a `task.dev`: when the note has the scope and the definition of done, set the stage: `ops task stage <address> scoped --note "<one line about the scope>"`. When the scope is not complete, do not set `scoped`.
 - Copy the state into the note: `flint shard task task-sync <address>`.
 - Give the person the address and the next command: `flint shard invoke task do_task --input task=<address>`.
 - With an open invocation, close it with `--outcome done`.
@@ -80,9 +79,8 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 > [!headless]
 > - Close the invocation with `--outcome done` before the return.
 > - When the close of the invocation prints `back in:`, a parent frame is open. Do not return: keep the result for the parent frame, and continue it.
-> - Else set `flint orbh session set phase complete`, and return: `flint orbh session return --finish "Created task <address> <title>. <place>. <stage>. Next: <the do_task command>."`
+> - Else set `flint orbh session set phase complete`, and return: `flint orbh session return --finish "Created task <address> <title>. <place>. Next: <the do_task command>."`
 
 # Output
 
 - A task note in `Mesh/Types/Tasks/` and a `todo` Ops task with its place, linked both ways
-- A `task.dev` at `scoped` when its scope is complete

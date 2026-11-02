@@ -24,7 +24,7 @@ Use the dev deployment only for work on Ops itself, for example a test of a new 
 
 - Each verb takes `--org <org>` (a slug, a name, or `me`) and `--json`. With no `--org`, `ops` uses the stored default org (`ops org use <org>`), else the personal workspace.
 - `-V` and `--version` are global: they print the version of the CLI. No task verb has a flag `--version`.
-- A `<ref>` of a task is a Convex id, an Ops address (`@v1/<org>/task/<id>#ops` or `@v1/<org>/task.dev/<id>#ops`), a URL of Ops, or a title. Use the address: a title can match more than one task. (The help of `update` and `start` says "ID, URL, or title", but both read an address too.)
+- A `<ref>` of a task is a Convex id, an Ops address (`@v1/<org>/task/<id>#ops`; an old address `task.dev/<id>` still resolves), a URL of Ops, or a title. Use the address: a title can match more than one task. (The help of `update` and `start` says "ID, URL, or title", but both read an address too.)
 - A `<group>` is the Convex id, the address (`@v1/<org>/taskgroup/<id>#ops`), or the title of a task group.
 - The target of `attach` and `detach` is a task or a task group, by id or address. A title there names a task.
 - Give the address in a prompt, an object verb, and an attachment. It names the org too.
@@ -33,27 +33,25 @@ Use the dev deployment only for work on Ops itself, for example a test of a new 
 
 | Command | What it does |
 |---|---|
-| `ops task create <title> [--type task.dev] [--repo <name>] [--unplaced \| --section <s> \| --project <p> \| --deliverable <d> \| --deployment <d> \| --parent <task> \| --route [text] \| --master] [--tag <tag>] [--every day\|week\|month] [--note <address> [--note-label <text>]] [--body <md\|->\|--body-file <path>] [--priority <p>] [--assign <member>] [--top]` | Create a task. Since the revamp of ops-command-1021 a task lives in a section: `--project` is its backlog section, `--deliverable` its first open section, `--deployment` its inbox, `--parent` makes a subtask, and `--route` lets Ops pick the place (the output names it). The former `--subsection` and `--folder` still work, hidden. `--type task.dev` makes a typed task. `--repo` sets the field `repo` and adds a `repo` related link. `--unplaced` gives no home. With no placement flag, the home is the org master backlog. `--note` sets the note address, and `--note-label` its label. `--body -` reads stdin. The Tasks shard does not call it directly: `task-new` does. |
+| `ops task create <title> [--repo <name>] [--unplaced \| --section <s> \| --project <p> \| --deliverable <d> \| --deployment <d> \| --parent <task> \| --route [text] \| --master] [--tag <tag>] [--every day\|week\|month] [--note <address> [--note-label <text>]] [--body <md\|->\|--body-file <path>] [--priority <p>] [--assign <member>] [--top]` | Create a task. Since the revamp of ops-command-1021 a task lives in a section: `--project` is its backlog section, `--deliverable` its first open section, `--deployment` its inbox, `--parent` makes a subtask, and `--route` lets Ops pick the place (the output names it). The former `--subsection` and `--folder` still work, hidden. `--repo` adds a `repo` related link (`ops task relate <ref> repo <name>`). `--unplaced` gives no home. With no placement flag, the home is the org master backlog. `--note` sets the note address, and `--note-label` its label. `--body -` reads stdin. The Tasks shard does not call it directly: `task-new` does. |
 | `ops task note <ref> <address> [--label <text>]` | Set the task note of a task: the note address and its label. A new address with no label clears the label. |
 | `ops task note <ref> --clear` | Remove the note and its label. An undo in the web brings them back. |
-| `ops task list [--all] [--unplaced] [--type <type>] [--stage <stage>] [--status open\|todo\|doing\|done\|all] [--limit <n>] [present scope flags]` | List tasks. The default status is `open`, and the default limit is 200 tasks. `--all` lists every task of the org, newest first, and reads it page by page. |
+| `ops task list [--all] [--unplaced] [--status open\|todo\|doing\|done\|all] [--limit <n>] [present scope flags]` | List tasks. The default status is `open`, and the default limit is 200 tasks. `--all` lists every task of the org, newest first, and reads it page by page. |
 | `ops task search <query> [--limit <n>]` | Search the tasks of the org by title (default 25, at most 100). Use it to find a task with the same intent before a create. |
-| `ops task show <ref>` | Show a task with its type, stage, outcome, fields, lineage, task groups, relations, and attachments. The text has a line `note  <label, else the address>` and a line with the open link. |
+| `ops task show <ref>` | Show a task with its status, outcome, result, lineage, task groups, relations, and attachments. The text has a line `note  <label, else the address>` and a line with the open link. |
 | `ops task update <ref> [--title <t>] [--body <md\|->\|--body-file <path>] [--priority <p\|none>] [--assign <member\|none>]` | A present verb: change the title, the body, the priority, or the owner. |
 | `ops task start <ref>` | A present verb: set the status `doing`. |
 | `ops task result <ref> "<text>"` | Write the result of the task. `-` reads stdin; `""` clears it. |
-| `ops task field <ref> <name> <value> [--append \| --remove]` | Set a type field (`""` clears it). `--append` adds one item to a list field; a second append of the same item changes nothing. `--remove` removes each item equal to the value from a list field, in one write, so an append of another session stays. A remove of an item that is not in the list changes nothing. Give `--append` or `--remove`, not both. |
-| `ops task retype <ref> (<type>[@<version>] \| --none) [--type-version <v>]` | Change the type of a task that is not done, or make it untyped with `--none`. See § Type Change. |
-| `ops task commit <ref> <sha> [--repo <name>]` | Append `<sha>` or `<sha> (<repo>)` to the field `wipCommits`. The SHA has 4 to 64 hex characters. Give `--repo` when the work has commits in more than one repository. Only for a `task.dev`: an untyped task refuses with `task_untyped`. |
 
-## Stage and Close
+The result is also the record of the commits and the session of the work: [[dev-knw-task-commits]].
+
+## Close
 
 | Command | What it does |
 |---|---|
-| `ops task stage <ref> <stage> [--note "<text>"]` | Set the stage of a typed task, with a note in the stage history. |
-| `ops task close <ref> [--outcome completed\|dropped\|superseded] [--result "<text>"]` | Close the task with an outcome (default `completed`). `--result -` reads stdin. |
+| `ops task close <ref> [--outcome completed\|dropped\|superseded] [--result "<text>"]` | Close the task with an outcome (default `completed`), at any time. `--result -` reads stdin. |
 | `ops task done <ref>` | A present verb: the same as `close` with `completed`. |
-| `ops task reopen <ref>` | A present verb: set `doing`, clear the outcome, keep the stage and its history. |
+| `ops task reopen <ref>` | A present verb: set `doing`, and clear the outcome. |
 
 ## Placement
 
@@ -96,37 +94,13 @@ The `ref2` of a session is its session address: `@v1/<org>/session/<uuid>#flint/
 | `ops task group list [--open]` | List the task groups of the org, newest first, with their counts and `open`. |
 | `ops task group delete <group>` | Delete the task group and its members. The tasks stay. |
 
-## Type Change (Rule C4.8)
-
-`ops task retype <ref> <type>` gives the task the active version of the type, or the version of `<type>@<version>` or `--type-version <v>`. `ops task retype <ref> --none` makes the task untyped. Give a type or `--none`, not both; `--none` takes no `--type-version`.
-
-- `--none` clears the type, the type version, the stage, and the fields.
-- A new type keeps the stage only when the new type defines a stage with the same name. It keeps a field only when the new type defines a field with the same name and kind. The other values go.
-- The same type and version is no change, and it writes no event.
-- A done task refuses with `task_type_done`. Reopen it first (`ops task reopen <ref>`), because a completed typed task needs a stage that can close.
-- A person and an agent can both change the type. The stage events stay as history. One undo restores the type, the stage, and the fields.
-- The address follows the type: `@v1/<org>/task/<id>#ops` becomes `@v1/<org>/task.dev/<id>#ops`, and `--none` gives `task/<id>` again. The old address still resolves to the task. Use the `address` of the output from then on. When the task is an object of the session, add the new address as an object, and remove the item of the old address.
-- When a task needs a type after its create, retype it. Do not make a new task for it.
-
-## Task Types
-
-| Command | What it does |
-|---|---|
-| `ops task type list` | List the active task types. |
-| `ops task type show <type>[@<version>] [--type-version <v>]` | Show one task type: its fields and its stages. With no version, the latest active version. `task.dev@0.1` and `task.dev --type-version 0.1` are the same. |
-
-For one version of a type, use `<type>@<version>` or `--type-version <v>`. The global `-V` / `--version` prints the version of the CLI, not of a type.
-
 ## JSON Outputs
 
 | Command | The keys of `--json` |
 |---|---|
-| `show` | `address`, `note`, `noteLabel`, `noteUrl` (each `null` when the task has no note), `task` (the row with `checkbox`, `outcome`, `type`, `stage`, `stageLabel`, `fields`, `unplaced`, `homeLabel`, `groupIds`, `chainReady`, …), `taskType`, `stageEvents` (oldest first; each with `from`, `to`, `actorKind`, `session`, `note`, `at`), `links`, `groups`, `relations`, `attachments`, `launches`, `breadcrumb`, `orgSlug`, `url` |
+| `show` | `address`, `note`, `noteLabel`, `noteUrl` (each `null` when the task has no note), `task` (the row with `checkbox`, `outcome`, `result`, `unplaced`, `homeLabel`, `groupIds`, `chainReady`, …), `links`, `groups`, `relations`, `attachments`, `launches`, `breadcrumb`, `orgSlug`, `url` |
 | `create` | `id`, `address`, `orgSlug`, `title`, and the placement; with `--note`, also `note`, `noteLabel`, and `noteUrl` |
 | `note` | `taskId`, `address`, `note`, `noteLabel`, `noteUrl` (each note field `null` after `--clear`) |
-| `retype` | `taskId`, `address` (the address after the change), `type`, `typeVersion`, `stage`, `fields` |
-| `field` | `{id, field, value}` for a set; `{id, field, appended}` for `--append`; `{id, field, removed}` for `--remove` |
-| `commit` | `id`, `field: "wipCommits"`, `appended` |
 | `split` | `id` (the old task), `taskIds`, `tasks` (each `{id, title, address}`), `keepOpen` |
 | `merge` | `taskId` (the survivor), `address`, `title`, `absorbed`, `created` |
 | `continue` | `id` (the old task), `taskId` (the new task), `address`, `title` |
@@ -134,7 +108,7 @@ For one version of a type, use `<type>@<version>` or `--type-version <v>`. The g
 | `group show` | `address` (always the Ops address of the task group), `group`, `tasks` (summaries), `open`, and `attachments` |
 | `attach` | `attachmentId`, `target: {kind: "task"\|"taskgroup", id, address}` |
 
-**A failed read after a write.** `create`, `retype`, `split`, `merge`, `continue`, `attach`, and `group create` read the address after the write. When that read fails, the command still exits 0: the output has the new id with `address: null`, and a note on stderr says that the write is done and names the read to run. **Do not run the write again.** Run the read that the stderr message names (for example `ops task show <id> --json`) to get the address.
+**A failed read after a write.** `create`, `split`, `merge`, `continue`, `attach`, and `group create` read the address after the write. When that read fails, the command still exits 0: the output has the new id with `address: null`, and a note on stderr says that the write is done and names the read to run. **Do not run the write again.** Run the read that the stderr message names (for example `ops task show <id> --json`) to get the address.
 
 ## The Note Scripts
 
@@ -142,10 +116,10 @@ The Tasks shard makes and keeps the task notes with three scripts (`flint shard 
 
 | Script | Command | What it does |
 |---|---|---|
-| `task-new` | `flint shard task task-new "<title>" [--type <type>] [--repo <name>] [--org <org>] [--unplaced \| --subsection <s> \| --project <p> [--folder <f>] \| --master] [--priority <p>] [--assign <member>] [--body-file <path>]` | (`--subsection` names a section: the script passes it to `ops task create`.) Writes the task note (`flint helper artifact create Task` reserves the number), gets the note address (`flint resolve @v1//task/<n> --json`), makes the Ops task with `--note` and `--note-label "Task <n> · <Flint name>"` and no body, and writes `ops` into the note. With no placement option, the Ops task is unplaced. `--repo` needs `--type task.dev`. `--body-file` gives the body of the note (no frontmatter); else the note has the headings of the template. |
-| `task-new --ops` | `flint shard task task-new ["<title>"] --ops <ref> [--org <org>] [--body-file <path>]` | Writes the note of an Ops task that exists and has no note (a part of a split, a continuation, the new survivor of a merge with `--title`, a task from the web), links it with `ops task note`, and copies the state of the Ops task into the note (as `task-sync`). The title and the type come from the Ops task, unless a title is given. It refuses the options of a new Ops task, and an Ops task that already has a note. |
-| `task-link` | `flint shard task task-link "<(Task) N Title>" [--ops <ref>] [--org <org>] [--type …] [--repo …] [placement] [--priority <p>] [--assign <member>]` | Links a note that exists. With `--ops`: it sets the note of that Ops task, writes `ops` into the note, and copies the state of the Ops task into the note (as `task-sync`). With no `--ops` and a note with `ops`: it links the same Ops task again (a repair), and copies the state too. With no `--ops` and no `ops`: it makes the Ops task (the type comes from `--type`, else the field `task-type` of the note). It refuses a note that links another Ops task, and an Ops task that has another note. |
-| `task-sync` | `flint shard task task-sync "<(Task) N Title>"`, or `flint shard task task-sync <Ops address>` | Reads the Ops task and writes `status`, `stage`, `task-type`, `completed`, and `ops` into the note (the map of the status is in [[dev-knw-task-model]] § The Task Note). A change of the status or the stage adds a Task Log line. With an Ops address, it finds the note through the field `note` of Ops. |
+| `task-new` | `flint shard task task-new "<title>" [--repo <name>] [--org <org>] [--unplaced \| --subsection <s> \| --project <p> [--folder <f>] \| --master] [--priority <p>] [--assign <member>] [--body-file <path>]` | (`--subsection` names a section: the script passes it to `ops task create`.) Writes the task note (`flint helper artifact create Task` reserves the number), gets the note address (`flint resolve @v1//task/<n> --json`), makes the Ops task with `--note` and `--note-label "Task <n> · <Flint name>"` and no body, and writes `ops` into the note. With no placement option, the Ops task is unplaced. `--repo <name>` passes `--repo` to `ops task create` (the `repo` related link), and writes the name into `git-repos` of the note. `--body-file` gives the body of the note (no frontmatter); else the note has the headings of the template. |
+| `task-new --ops` | `flint shard task task-new ["<title>"] --ops <ref> [--org <org>] [--body-file <path>]` | Writes the note of an Ops task that exists and has no note (a part of a split, a continuation, the new survivor of a merge with `--title`, a task from the web), links it with `ops task note`, and copies the state of the Ops task into the note (as `task-sync`). The title comes from the Ops task, unless a title is given. It refuses the options of a new Ops task, and an Ops task that already has a note. |
+| `task-link` | `flint shard task task-link "<(Task) N Title>" [--ops <ref>] [--org <org>] [--repo …] [placement] [--priority <p>] [--assign <member>]` | Links a note that exists. With `--ops`: it sets the note of that Ops task, writes `ops` into the note, and copies the state of the Ops task into the note (as `task-sync`). With no `--ops` and a note with `ops`: it links the same Ops task again (a repair), and copies the state too. With no `--ops` and no `ops`: it makes the Ops task. It refuses a note that links another Ops task, and an Ops task that has another note. |
+| `task-sync` | `flint shard task task-sync "<(Task) N Title>"`, or `flint shard task task-sync <Ops address>` | Reads the Ops task and writes `status`, `completed`, and `ops` into the note (the map of the status is in [[dev-knw-task-model]] § The Task Note). It clears the old fields `task-type` and `stage` when the note has a value in them. A change of the status adds a Task Log line. With an Ops address, it finds the note through the field `note` of Ops. |
 
 The JSON of each script:
 
@@ -153,13 +127,13 @@ The JSON of each script:
 |---|---|
 | `task-new` | `number`, `title`, `path`, `note`, `noteLabel`, `ops` |
 | `task-link` | `number`, `title`, `path`, `note`, `noteLabel`, `ops`, `created` |
-| `task-sync` | `number`, `title`, `path`, `ops`, `status`, `stage`, `type`, `changed` (the fields that changed), `noteLinked` (`true` when the Ops task names this note) |
+| `task-sync` | `number`, `title`, `path`, `ops`, `status`, `changed` (the fields that changed), `noteLinked` (`true` when the Ops task names this note) |
 
 **When the Ops part fails.** `task-new` keeps the note and prints the JSON with `ops: null`, `error`, and `next`, with exit 1. Each word of a command in the output is quoted for a POSIX shell. `next` depends on the outcome of the create:
 
 | Outcome | How the script knows it | `next` |
 |---|---|---|
-| Ops refused the create, and wrote nothing | The code of the JSON error of `ops` is in a fixed list of codes that come before any write: a usage error, a login error, a ref that does not resolve (`…_not_found`, `…_ambiguous`), a refusal of the gateway before the mutation, or a refusal of the mutation `tasks.create` (for example `task_note_invalid`). The HTTP status is not used | `task-link` with each option of the run (`--org`, `--type`, `--repo`, the placement, `--priority`, `--assign`) |
+| Ops refused the create, and wrote nothing | The code of the JSON error of `ops` is in a fixed list of codes that come before any write: a usage error, a login error, a ref that does not resolve (`…_not_found`, `…_ambiguous`), a refusal of the gateway before the mutation, or a refusal of the mutation `tasks.create` (for example `task_note_invalid`). The HTTP status is not used | `task-link` with each option of the run (`--org`, `--repo`, the placement, `--priority`, `--assign`) |
 | The create made the task, and a step after it failed | The message `Created task <id>, but <part> failed: …` | `task-link … --ops <id>`; `opsId` is the task. `error` gives the step for the failed part (for the repo link: `ops task relate <id> repo <name>`) |
 | Not known (a network error, a time-out, `bad_response`, `agent_error`, an unknown code, no JSON error) | Any other failure, whatever the HTTP status | A search in the org of the create (`--org`, else the org of the placement address, else the active org): `ops task search "<title>" [--org <org>] --json`. Read the note of each task of the search (`ops task show <id> --json`): the task with the note of this note is the task, so run `ifFound` (`task-link … --ops <id>`). There is no create command: a search can miss a task. Do not create the task again until a person or the agent has checked the Ops tasks of the org by hand |
 
@@ -204,7 +178,7 @@ An Orbh session keeps a task in its context as an object of the Objects Protocol
 
 - A session holds at most 20 items. Add each task that the work uses.
 - **A task group.** Do not add the task group: its object does not resolve. Add each task of the task group as an object (at most 20 items).
-- Take or chair the task only for a change that must not collide (a series of mesh writes, a stage change), and return it after the change. A hold is a lease (600 s by default). Orbh renews each hold while the session lives, and returns it at the end of the session.
+- Take or chair the task only for a change that must not collide (a series of mesh writes, or a result and a close), and return it after the change. A hold is a lease (600 s by default). Orbh renews each hold while the session lives, and returns it at the end of the session.
 - When a verb answers `held` (exit 9), another actor holds the task. Send a `request`, and do not get around the hold.
 - The Page shows each item in the `OBJECTS` block. A changed task shows its full block with `state: changed`. A hold shows in the part `Holds (<n>)`.
 - A dispatcher gives a task to a new session at the launch: `flint orbh launch … --object <task address>=subscribe`.

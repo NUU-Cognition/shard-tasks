@@ -1,20 +1,22 @@
 #!/usr/bin/env node
 // task-new of the Tasks shard (Task 1291, contract N6): make a task in two parts, linked both ways.
-// Invocation: flint shard task task-new "<title>" [--type <type>] [--repo <name>] [--org <org>]
+// Invocation: flint shard task task-new "<title>" [--repo <name>] [--org <org>]
 //   [--unplaced | --subsection <s> | --project <p> [--folder <f>] | --master] [--priority <p>] [--assign <member>]
 //   [--body-file <path>]
 //        flint shard task task-new ["<title>"] --ops <ref> [--org <org>] [--body-file <path>]
 // 1. It writes the task note: `flint helper artifact create Task` reserves the number and writes the note in one step
-//    (the template tmp-proj-task-v0.2, with the fields task-type and, later, ops). --body-file gives the body of the
-//    note (the Markdown after the frontmatter); with no --body-file, the body has the headings of the template.
+//    (the template tmp-proj-task-v0.2; step 4 adds the field ops). --repo writes the repository into git-repos.
+//    --body-file gives the body of the note (the Markdown after the frontmatter); with no --body-file, the body has the
+//    headings of the template.
 // 2. It gets the note address: `flint resolve @v1//task/<n> --json` (the field address).
 // 3. It makes the Ops task with no body: `<ops> task create "<title>" --note <address> --note-label "Task <n> · <Flint>"
-//    … --json`. With no placement option, the Ops task is unplaced.
+//    … --json`. With no placement option, the Ops task is unplaced. --repo goes to `task create --repo` (the repo
+//    related link).
 //    With --ops <ref>, it makes no Ops task: it writes the note of an Ops task that exists and has no note (a part of a
-//    split, a continuation, the survivor of a merge with --title), and links it with `<ops> task note`. The title and
-//    the type come from the Ops task, unless a title is given.
+//    split, a continuation, the survivor of a merge with --title), and links it with `<ops> task note`. The title
+//    comes from the Ops task, unless a title is given.
 // 4. It writes `ops` (the Ops address) into the note, stamps the session in `orb`, and adds a Task Log line. With
-//    --ops, it also copies the state of the Ops task into the note (status, stage, task-type, completed), as task-sync.
+//    --ops, it also copies the state of the Ops task into the note (status, completed), as task-sync.
 // Output: one JSON document { number, title, path, note, noteLabel, ops }. When the Ops part fails, the note stays,
 // `ops` is null, `error` says what failed, `next` names the command to run next (quoted for a POSIX shell), and the
 // exit code is 1:
@@ -33,10 +35,10 @@ const n = require(fs.existsSync(path.join(__dirname, 'note-lib.js')) ? './note-l
 
 const { lib, TaskError } = n;
 
-const USAGE = 'Usage: flint shard task task-new "<title>" [--type <type>] [--repo <name>] [--org <org>] [--unplaced | --subsection <s> | --project <p> [--folder <f>] | --master] [--priority <p>] [--assign <member>] [--body-file <path>], or flint shard task task-new ["<title>"] --ops <ref> [--org <org>] [--body-file <path>].';
+const USAGE = 'Usage: flint shard task task-new "<title>" [--repo <name>] [--org <org>] [--unplaced | --subsection <s> | --project <p> [--folder <f>] | --master] [--priority <p>] [--assign <member>] [--body-file <path>], or flint shard task task-new ["<title>"] --ops <ref> [--org <org>] [--body-file <path>].';
 
 /** The options of a new Ops task: --ops (a present Ops task) refuses them. */
-const CREATE_OPTIONS = ['type', 'repo', 'subsection', 'project', 'folder', 'priority', 'assign', 'unplaced', 'master'];
+const CREATE_OPTIONS = ['repo', 'subsection', 'project', 'folder', 'priority', 'assign', 'unplaced', 'master'];
 
 /** The priorities of the note template. Ops also has urgent: the note then keeps an empty priority. */
 const NOTE_PRIORITIES = ['low', 'medium', 'high'];
@@ -56,13 +58,10 @@ function noteContent(options, body) {
     'due:',
     'completed:',
     `priority:${NOTE_PRIORITIES.includes(options.priority) ? ` ${options.priority}` : ''}`,
-  ];
-  if (options.type && options.type !== 'task') lines.push(`task-type: ${options.type}`);
-  lines.push(
     'template: "[[tmp-proj-task-v0.2]]"',
     'authors:',
     '  - "{{author}}"',
-  );
+  ];
   if (options.repo) lines.push('git-repos:', `  - ${JSON.stringify(options.repo)}`);
   lines.push('wip-commits:', 'checkpointed:', '---', '');
   return `${lines.join('\n')}\n${body}`;
@@ -104,7 +103,7 @@ function writeOps(root, file, address, what, state) {
     const doc = lib.readDoc(root, file, 'task');
     n.setField(doc, 'ops', address);
     lib.trackSession(doc, process.env.ORBH_SESSION_ID || null);
-    lib.appendTaskLog(doc, `- ${lib.today()}: ${what} ${address}. Ops holds the status and the stage (${n.provenance('task-new')}).`);
+    lib.appendTaskLog(doc, `- ${lib.today()}: ${what} ${address}. Ops holds the status (${n.provenance('task-new')}).`);
     if (state) n.writeState(doc, { ...state, ops: address }, 'task-new');
     lib.writeDoc(doc);
   });
@@ -122,7 +121,6 @@ function recovery(title, options, placement, ops) {
     return n.shellCommand(words);
   }
   if (options.org) words.push('--org', options.org);
-  if (options.type) words.push('--type', options.type);
   if (options.repo) words.push('--repo', options.repo);
   words.push(...placement);
   if (options.priority) words.push('--priority', options.priority);
@@ -132,7 +130,7 @@ function recovery(title, options, placement, ops) {
 
 n.run('task-new', (argv) => {
   const { positional, options } = n.parseArgs(argv, {
-    values: ['type', 'repo', 'org', 'subsection', 'project', 'folder', 'priority', 'assign', 'body-file', 'ops'],
+    values: ['repo', 'org', 'subsection', 'project', 'folder', 'priority', 'assign', 'body-file', 'ops'],
     flags: ['unplaced', 'master'],
     usage: USAGE,
   });
@@ -148,16 +146,12 @@ n.run('task-new', (argv) => {
     if (note) throw new TaskError(`The Ops task ${present.address} already has the note ${note}. Use task-link with that note. Nothing changed.`);
     // The state of the Ops task goes into the note after the link. An unknown status refuses here, before any write.
     present.state = n.opsState(present);
-    if (typeof present.task.type === 'string' && present.task.type !== '' && present.task.type !== 'task') options.type = present.task.type;
   } else if (positional.length !== 1) {
     throw new TaskError(`Give one title. ${USAGE} Nothing changed.`);
   }
   const title = (positional[0] || (present && typeof present.task.title === 'string' ? present.task.title : '')).trim();
   if (title === '') throw new TaskError(`Give a title. ${USAGE} Nothing changed.`);
   if (/[\r\n]/.test(title)) throw new TaskError('The title has a line break. Nothing changed.');
-  if (options.repo && (!options.type || options.type === 'task')) {
-    throw new TaskError('--repo is a field of a typed task: give --type task.dev too. Nothing changed.');
-  }
   const placement = present ? [] : n.placementArgs(options);
   const flint = n.flintInfo(root);
   const body = noteBody(options);
@@ -212,7 +206,6 @@ n.run('task-new', (argv) => {
   const args = [
     'task', 'create', title,
     '--note', result.note, '--note-label', label,
-    ...(options.type ? ['--type', options.type] : []),
     ...(options.repo ? ['--repo', options.repo] : []),
     ...placement,
     ...(options.priority ? ['--priority', options.priority] : []),

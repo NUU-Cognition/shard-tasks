@@ -1,5 +1,5 @@
 ---
-description: "Split a task into new parts with ops task split: each part keeps the home, the type, and the relations, and the old task closes as superseded"
+description: "Split a task into new parts with ops task split: each part keeps the home and the relations, and the old task closes as superseded"
 ---
 
 > [!important] THIS FILE IS AN INSTRUCTION. WHEN REFERENCED IT IS MEANT TO BE TAKEN AS AN ACTION.
@@ -24,8 +24,8 @@ Split a task that is too big, or that holds two intents, into new tasks.
    ```bash
    ops task split <ref> --part "<title 1>" --part "<title 2>" [--keep-open] --json
    ```
-   Each part gets the home, the type, the type version, and the relations of the old task, and no stage. Each part gets `split-from` the old task. The old task closes with `superseded`, unless `--keep-open`. The output lists each part as `{id, title, address}`. When the output has `address: null`, the write is done: do not run it again. Run the read that the stderr message names (`ops task show <id> --json`) to get the address.
-4. **Give each part its task note.** Write the body of the note of each part to a temporary file: its context (with the address of the old task), its scope, and its items of the definition of done. Then make the note and link it to the part: `flint shard task task-new --ops <part address> --body-file <file>` (the title and the type come from the part). For a `task.dev` with a complete scope, set `ops task stage <part address> scoped`, then `flint shard task task-sync <part address>`.
+   Each part gets the home and the relations of the old task. Each part gets `split-from` the old task. The old task closes with `superseded`, unless `--keep-open`. The output lists each part as `{id, title, address}`. When the output has `address: null`, the write is done: do not run it again. Run the read that the stderr message names (`ops task show <id> --json`) to get the address.
+4. **Give each part its task note.** Write the body of the note of each part to a temporary file: its context (with the address of the old task), its scope, and its items of the definition of done. Then make the note and link it to the part: `flint shard task task-new --ops <part address> --body-file <file>` (the title comes from the part).
 5. **Sync the old note:** `flint shard task task-sync <old address>`. Its status becomes `superseded` (unless `--keep-open`). Add a `# Task Log` line in the old note with the address of each part.
 6. **Move the attachments that matter.** A note of the old task that serves one part: `ops task attach <part ref> note "<Mesh path>"`.
 7. **Add the part.** When the old task is an object of the session, add the part that the session does now as an object: `flint orbh objects add <part address> --subscribe`. Remove the item of the old task when the work no longer needs it.

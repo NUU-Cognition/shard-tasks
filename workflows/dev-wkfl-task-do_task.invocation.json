@@ -6,7 +6,7 @@
     "task": {
       "kind": "text",
       "required": true,
-      "description": "The address of the task, for example @v1/nuucognition/task.dev/<id>#ops."
+      "description": "The address of the task, for example @v1/nuucognition/task/<id>#ops."
     }
   },
   "then": [
@@ -33,17 +33,17 @@
       "evidence": "required",
       "stage": "Stage 2: Task Work",
       "next": {
-        "interactive": "Do the work of {{task}}. Make each step that serves its intent a subtask in Strike. For a task.dev, record each WIP commit: ops task commit {{task}} <sha> --repo <name>. For an untyped task, name the commits in the result.",
-        "headless": "Set the phase implementing. Do the work of {{task}}, and keep the progress current. For a task.dev, record each WIP commit: ops task commit {{task}} <sha> --repo <name>. For an untyped task, name the commits in the result. When blocked, use a deferred request."
+        "interactive": "Do the work of {{task}}. Make each step that serves its intent a subtask in Strike. Follow the WIP commit rule of knw-task-commits, and keep each commit as <sha> (<repo>) for the result.",
+        "headless": "Set the phase implementing. Do the work of {{task}}, and keep the progress current. Follow the WIP commit rule of knw-task-commits, and keep each commit as <sha> (<repo>) for the result. When blocked, use a deferred request."
       }
     },
     {
-      "id": "built",
-      "title": "Built",
+      "id": "result",
+      "title": "Result",
       "by": "agent",
       "evidence": "required",
-      "stage": "Stage 3: Built",
-      "next": "Write the result with ops task result {{task}} '<text>'. For a task.dev, set the stage: ops task stage {{task}} built --note '<the commits and the tests>'. Then run flint shard task task-sync {{task}}."
+      "stage": "Stage 3: Result",
+      "next": "Write the result with ops task result {{task}} '<what the work gave>. Tests: <…>. Commits: <sha> (<repo>), …. Session: <ORBH_SESSION_ID>'. Then run flint shard task task-sync {{task}}."
     },
     {
       "id": "review",
@@ -63,7 +63,7 @@
       "evidence": "required",
       "stage": "Stage 5: Close",
       "modes": ["interactive"],
-      "next": "A task.dev closes with completed only at reviewed or verified. When the stage is right and the person confirms, close it with sk-task-close_task: ops task close {{task}}, then flint shard task task-sync {{task}}. Else skip this step with a reason, and close the invocation with --outcome done."
+      "next": "When the person confirms, close the task with sk-task-close_task: ops task close {{task}}, then flint shard task task-sync {{task}}. Keep the result: it names the commits. When the person wants the review first, skip this step with a reason, and close the invocation with --outcome done."
     }
   ],
   "behaviours": [
@@ -79,7 +79,7 @@
       "phase": "before",
       "disposition": ["finish"],
       "when": { "task": "set" },
-      "say": "Before the return: write the result of {{task}}. For a task.dev, record each WIP commit with ops task commit and set built. For an untyped task, name the commits in the result. Then run flint shard task task-sync {{task}}. Put the review_task command in the result."
+      "say": "Before the return: write the result of {{task}}, with each commit as <sha> (<repo>) and the session. Then run flint shard task task-sync {{task}}. Put the review_task command in the result."
     }
   ]
 }

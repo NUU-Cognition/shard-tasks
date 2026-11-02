@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // task-link of the Tasks shard (Task 1291, contract N6): link a task note and an Ops task both ways.
 // Invocation: flint shard task task-link "<(Task) N Title>" [--ops <ref>] [--org <org>]
-//   [--type <type>] [--repo <name>] [--unplaced | --subsection <s> | --project <p> [--folder <f>] | --master]
+//   [--repo <name>] [--unplaced | --subsection <s> | --project <p> [--folder <f>] | --master]
 //   [--priority <p>] [--assign <member>]
 // The note is a title, a wikilink, or a path under Mesh/. Its note address comes from `flint resolve @v1//task/<n>`.
 // - With --ops <ref>: it sets the note of that Ops task (`<ops> task note <ref> <address> --label …`), writes the
@@ -9,7 +9,8 @@
 // - With no --ops, and a note that has `ops`: it links the same Ops task again (a repair of the Ops side), and copies
 //   the state too.
 // - With no --ops, and a note with no `ops`: it makes the Ops task with no body (`<ops> task create "<name>" --note …`;
-//   the type is --type, else the field task-type of the note; with no placement option, the task is unplaced).
+//   --repo adds the repo related link; with no placement option, the task is unplaced). Ops has no task types: the
+//   old field task-type of a note does not go to Ops.
 // It refuses a note that already links another Ops task, and an Ops task that already has another note.
 // When the create fails, the note does not change. A refusal of Ops wrote nothing. A create that made the task and failed
 // after it names task-link --ops <id>. When the outcome is not known, the refusal names a search and no create command.
@@ -23,9 +24,9 @@ const n = require(fs.existsSync(path.join(__dirname, 'note-lib.js')) ? './note-l
 
 const { lib, TaskError } = n;
 
-const USAGE = 'Usage: flint shard task task-link "<(Task) N Title>" [--ops <ref>] [--org <org>] [--type <type>] [--repo <name>] [--unplaced | --subsection <s> | --project <p> [--folder <f>] | --master] [--priority <p>] [--assign <member>].';
+const USAGE = 'Usage: flint shard task task-link "<(Task) N Title>" [--ops <ref>] [--org <org>] [--repo <name>] [--unplaced | --subsection <s> | --project <p> [--folder <f>] | --master] [--priority <p>] [--assign <member>].';
 
-/** Two Ops addresses name the same task when their ids are equal (a type change moves task/<id> to task.dev/<id>). */
+/** Two Ops addresses name the same task when their ids are equal (an old task.dev/<id> is the task task/<id>). */
 function sameTask(a, b) {
   const id = (address) => {
     const match = /^@v1\/([^/#\s]+)\/task(?:\.[a-z][a-z0-9]*)?\/([^/#\s]+)#ops$/.exec(String(address || '').trim());
@@ -36,12 +37,12 @@ function sameTask(a, b) {
 
 n.run('task-link', (argv) => {
   const { positional, options } = n.parseArgs(argv, {
-    values: ['ops', 'org', 'type', 'repo', 'subsection', 'project', 'folder', 'priority', 'assign'],
+    values: ['ops', 'org', 'repo', 'subsection', 'project', 'folder', 'priority', 'assign'],
     flags: ['unplaced', 'master'],
     usage: USAGE,
   });
   if (positional.length !== 1) throw new TaskError(`Give one task note. ${USAGE} Nothing changed.`);
-  const createOptions = ['type', 'repo', 'subsection', 'project', 'folder', 'priority', 'assign', 'unplaced', 'master'].filter((key) => options[key] !== undefined);
+  const createOptions = ['repo', 'subsection', 'project', 'folder', 'priority', 'assign', 'unplaced', 'master'].filter((key) => options[key] !== undefined);
   const root = n.flintRoot();
   const found = n.findNote(root, positional[0]);
   const note = n.readNote(root, found.file);
@@ -79,12 +80,9 @@ n.run('task-link', (argv) => {
     opsAddress = set.json && typeof set.json.address === 'string' && set.json.address ? set.json.address : shown.address;
   } else {
     // Make the Ops task, with no body: the note holds the content.
-    const type = options.type || note.type || '';
-    if (options.repo && (!type || type === 'task')) throw new TaskError('--repo is a field of a typed task: give --type task.dev too. Nothing changed.');
     const args = [
       'task', 'create', found.name,
       '--note', address, '--note-label', label,
-      ...(type && type !== 'task' ? ['--type', type] : []),
       ...(options.repo ? ['--repo', options.repo] : []),
       ...n.placementArgs(options),
       ...(options.priority ? ['--priority', options.priority] : []),

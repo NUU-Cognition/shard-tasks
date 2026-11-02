@@ -1,5 +1,5 @@
 ---
-description: "Research the problem first, then write the scope into the task note (a new task through task-new, or the note of a task that exists), refine it with the person, and set scoped for a task.dev"
+description: "Research the problem first, then write the scope into the task note (a new task through task-new, or the note of a task that exists), and refine it with the person"
 ---
 
 > [!important] THIS FILE IS AN INSTRUCTION. WHEN REFERENCED IT IS MEANT TO BE TAKEN AS AN ACTION.
@@ -66,8 +66,8 @@ Once the text of the note is complete, progress to the next stage.
 
 ## Stage 3: Scope Writing
 
-- **A task that exists:** write the scope into its task note. A task with no note gets one first: write the text to a temporary file, and run `flint shard task task-new --ops <address> --body-file <file>`. A new title changes both parts: `flint helper rename "<old note title>" "<new title>"` and `ops task update <address> --title "<new title>"`. When the research shows that the task needs another type (for example an untyped task whose work changes code), retype it: `ops task retype <address> task.dev --json`, then set its repository (`ops task field <address> repo <name>` and `ops task relate <address> repo <name>`). Use the `address` of the output from then on. Do not make a new task for it. With an open invocation, set the input to the new address: `flint shard invocations set-input <id> task=<address>`.
-- **No task:** write the text of the note to a temporary file, and create the task with `flint shard task task-new "<title>" [--type task.dev --repo <name>] [--org <org>] --body-file <file>`. Use the title of the proposed approach, not of the request. Keep the field `ops` of the output. When `ops` is `null`, the note exists and the Ops part failed: fix the cause, then run the command of `next`. Then place the Ops task with [[dev-sk-task-place_task]]. With an open invocation, set the input: `flint shard invocations set-input <id> task=<address>`.
+- **A task that exists:** write the scope into its task note. A task with no note gets one first: write the text to a temporary file, and run `flint shard task task-new --ops <address> --body-file <file>`. A new title changes both parts: `flint helper rename "<old note title>" "<new title>"` and `ops task update <address> --title "<new title>"`. When the research shows that the work changes code in a repository and the task has no `repo` link, add it: `ops task relate <address> repo <name>`.
+- **No task:** write the text of the note to a temporary file, and create the task with `flint shard task task-new "<title>" [--repo <name>] [--org <org>] --body-file <file>`. Use the title of the proposed approach, not of the request. Keep the field `ops` of the output. When `ops` is `null`, the note exists and the Ops part failed: fix the cause, then run the command of `next`. Then place the Ops task with [[dev-sk-task-place_task]]. With an open invocation, set the input: `flint shard invocations set-input <id> task=<address>`.
 - Attach the notes that the research made: `ops task attach <address> note "<Mesh path>"`.
 - Do not add the task as an object: this workflow does not do its work.
 - Once the scope is in the task note, give the task to the person, and progress to the next stage.
@@ -84,7 +84,7 @@ Once the text of the note is complete, progress to the next stage.
 ## Stage 5: Finalise
 
 - Resolve each open question, or write that it waits for a later decision. No open question is left with no owner.
-- For a `task.dev`: set the stage `scoped` when the note has the scope and the definition of done: `ops task stage <address> scoped --note "<one line about the scope>"`.
+- Check that the task note has the scope and the definition of done. The note is the record of the scope.
 - Copy the state into the note: `flint shard task task-sync <address>`.
 - Set the priority when the person gave one: `ops task update <address> --priority <low|medium|high|urgent>`.
 - Give the person the address and the next command: `flint shard invoke task do_task --input task=<address>`.
@@ -98,4 +98,3 @@ Once the text of the note is complete, progress to the next stage.
 # Output
 
 - A task note with the scope, the definition of done, and the proposal, linked to its Ops task
-- A `task.dev` at `scoped`

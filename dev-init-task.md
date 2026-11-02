@@ -12,10 +12,10 @@ The Tasks shard gives agents one way to work with the tasks of NUU Operations (O
 
 | File | Why |
 |---|---|
-| [[dev-knw-task-model]] | The model: the terms, the fields, the status, the stages, the close rules, lineage, task groups, and placement |
+| [[dev-knw-task-model]] | The model: the terms, the fields, the status, the outcome, the result, the close rules, lineage, task groups, and placement |
 | [[dev-knw-task-cli]] | Each command of `ops task`, the scripts `task-new`, `task-link`, and `task-sync`, and the verbs of `flint orbh objects` for a task |
 
-Read [[dev-knw-task-dev]] too before you work on a `task.dev`.
+Read [[dev-knw-task-commits]] too before you commit the work of a task.
 
 ## Terms
 
@@ -26,8 +26,7 @@ Read [[dev-knw-task-dev]] too before you work on a `task.dev`.
 | note address | The address of a task note: `@v1/<org>/task/<note id>#flint/<flint>`. Ops keeps it in the field `note`. |
 | status | The Ops `checkbox`: `todo`, `doing`, or `done`. Every task has one. `blocked` is a flag. |
 | outcome | Only for a done task: `completed`, `dropped`, or `superseded`. |
-| task type | A versioned extension of the base task, for example `task.dev@0.1`. It adds fields and stages. An untyped task is the base type `task`. |
-| stage | The second layer of a typed task. The task type defines the stages. |
+| result | The text of what the work gave. It names the commits and the session of the work. |
 | subtask | A Strike target mounted on an Ops task. Ops does not show subtasks. |
 | task group | A set of tasks that are done together, usually in one session. Each task stays a full task. |
 | lineage | The links `split-from`, `merged-into`, `continues-from`, and `after` (chain). |
@@ -46,10 +45,10 @@ Each task that this shard makes has two parts, linked both ways:
 | Part | Where | It holds | The link |
 |---|---|---|---|
 | Task note | `Mesh/Types/Tasks/(Task) <n> <title>.md`, from the template `tmp-proj-task-v0.2` of the Projects shard | The content: the context, the requirements, the definition of done, the Task Log, and the notes | Its field `ops` holds the Ops address |
-| Ops task | NUU Ops | The state: the status, the stage, the outcome, the type and its fields, the place, the lineage, the task groups, and the attachments | Its field `note` holds the note address, and its body stays empty |
+| Ops task | NUU Ops | The state: the status, the outcome, the result, the place, the lineage, the task groups, and the attachments | Its field `note` holds the note address, and its body stays empty |
 
 - **Make each task with `task-new`:** `flint shard task task-new "<title>" …`. It writes the note, makes the Ops task, and links both. Do not make an Ops task alone with `ops task create`, and do not write a task note by hand.
-- **Ops owns the state.** Ops owns the status, the stage, and the outcome. `flint shard task task-sync <ref>` copies them (and the type) into the note, in one direction only. Do not edit `status`, `stage`, `task-type`, `completed`, or `ops` of the note by hand: change the Ops task, then run `task-sync`.
+- **Ops owns the state.** Ops owns the status, the outcome, and the result. `flint shard task task-sync <ref>` copies the status and the date of the close into the note, in one direction only. Do not edit `status`, `completed`, or `ops` of the note by hand: change the Ops task, then run `task-sync`. An old note can have the fields `task-type` and `stage`: `task-sync` clears them.
 - **A task with no note.** A task that a person makes in the web, or that Strike makes, has no note and keeps its body. Give it a note with `flint shard task task-new --ops <ref>`. Link a note that exists with `flint shard task task-link "<(Task) N Title>" [--ops <ref>]`.
 - **The Ops address stays the key.** The task object, the invocation input `task`, and the attachments use the Ops address. Ops shows the note as "Open in Obsidian".
 - Ops holds all views of tasks. The Flint has no task dashboard of this shard.
@@ -69,7 +68,7 @@ flint orbh objects add <task address> --subscribe
 - Check the items with `flint orbh objects list`, and read one with `flint orbh objects show <id>`. The Page of the session shows each item in the `OBJECTS` block. A changed task shows its full block with `state: changed`.
 - Reading, research with no artifact, and an answer in the conversation need no object.
 - A session can hold up to 20 items. Add each task that the work uses. For a task group, add each task of the task group: the object of a task group does not resolve. Remove a task with `flint orbh objects remove <id>` when the work no longer needs it.
-- **Take the task only for a change that must not collide** with another session, for example a series of mesh writes or a stage change: `flint orbh objects take <task address>` (or `chair`). Return it after the change: `flint orbh objects return <task address>`. Orbh renews a hold while the session lives, and returns it at the end of the session. The Page shows a hold in the part `Holds` of the `OBJECTS` block.
+- **Take the task only for a change that must not collide** with another session, for example a series of mesh writes, or a result and a close: `flint orbh objects take <task address>` (or `chair`). Return it after the change: `flint orbh objects return <task address>`. Orbh renews a hold while the session lives, and returns it at the end of the session. The Page shows a hold in the part `Holds` of the `OBJECTS` block.
 - **When a verb answers `held` (exit 9),** another actor holds the task. Send a request: `flint orbh objects request <task address> --note "<why>"`. Do not get around the hold.
 - When you dispatch a subagent for this work, put the address of the task in the prompt. The dispatcher can give the task at the launch: `flint orbh launch … --object <task address>=subscribe`.
 
@@ -98,7 +97,7 @@ The Flint id is `flint.id` of `flint org show --json`. Then apply the rule:
 | No hint | Leave the task unplaced, with no project or deliverable link. |
 
 - A place that the person or the prompt gives wins over the hints: set it, and do not read the hints.
-- A `task.dev` always has the `repo` link. `ops task create --repo <name>` adds it at the create. When the field `repo` came in another way (`ops task field <ref> repo <name>`), add it: `ops task relate <ref> repo <name>`. The hints of `--repo` read these links.
+- A task whose work changes code in a repository has a `repo` link. `task-new --repo <name>` (it passes `--repo` to `ops task create`) adds it at the create. Else add it: `ops task relate <ref> repo <name>`. The hints of `--repo` read these links.
 
 [[dev-sk-task-place_task]] gives the steps.
 
@@ -110,26 +109,20 @@ todo → doing → done (completed | dropped | superseded)
           └───────┘ reopen
 ```
 
-- A close has one outcome: `completed`, `dropped`, or `superseded`.
-- `completed` on a typed task needs a stage that can close. Else `ops task close` refuses with `task_stage_not_closable`.
-- `dropped` and `superseded` are allowed at any stage. An untyped task closes at any time.
-- A reopen sets `doing`, clears the outcome, and keeps the stage.
-- After each change of the Ops state (a start, a stage, a close, a reopen, a type change), run `flint shard task task-sync <ref>`, so that the note shows the state.
+- A close has one outcome: `completed`, `dropped`, or `superseded`. `ops task close` closes a task at any time.
+- A task has no type and no stage. The status and the outcome are the state of the work. Progress goes into the result (`ops task result <ref> "<text>"`): what the work gave, the commits, and the review.
+- A reopen sets `doing` and clears the outcome.
+- After each change of the Ops state (a start, a close, a reopen), run `flint shard task task-sync <ref>`, so that the note shows the state.
 
 [[dev-sk-task-close_task]] gives the steps.
 
-## The Type task.dev
+## WIP Commits
 
-`task.dev@0.1` is the software development task. Use it for work that changes code in a repository. Read [[dev-knw-task-dev]] before you work on one.
+Work that changes code in a repository makes WIP commits. Read [[dev-knw-task-commits]] before the first commit.
 
-- **Fields:** `repo` (the repository, a plain name) and `wipCommits` (the SHAs of the WIP commits).
-- **Stages:** `scoped` → `built` → `reviewed` → `verified`. The order is for display: any stage can follow any stage.
-- `scoped`: the note has the scope and the definition of done. `built`: the work is done and committed. `reviewed`: a second session checked the work. `verified`: a person checked the work.
-- **Only a person sets `verified`.** An agent never sets it. A write from an Orbh session refuses with `task_stage_forbidden`.
-- A `task.dev` closes with `completed` at `reviewed` or at `verified`. Ops shows `done · Reviewed` or `done · Verified`.
-- **The type can change (rule C4.8).** `ops task retype <ref> task.dev` or `ops task retype <ref> --none`, on a task that is not done (a done task refuses with `task_type_done`). The stage and the fields stay only when the new type defines them. The address follows the type, and the old address still resolves. When a task needs a type after its create, retype it: do not make a new task.
-- Remove a WIP commit with `ops task field <ref> wipCommits "<item>" --remove`, never with a `set` of the whole list.
-- **WIP commits.** Add the task as an object before the first edit. Commit only your paths on the machine branch, with the subject `[OR] wip: <Flint name>/Task <short id> <what changed>` (the short id is the first 8 characters of the Ops id). The hook adds the trailers `Orbh-Fleet` and `Orbh-Session`: the subject names the task. After each commit, record it: `ops task commit <ref> <sha> --repo <name>`. Only a type with the field `wipCommits` (`task.dev`) takes `ops task commit`. An untyped task refuses it with `task_untyped`: name its commits in its result. Ops holds the commits: the field `wip-commits` of the note stays empty.
+- Add the task as an object before the first edit. Commit only your paths on the machine branch, with the subject `[OR] wip: <Flint name>/Task <short id> <what changed>` (the short id is the first 8 characters of the Ops id).
+- The hook adds the trailers `Orbh-Fleet` and `Orbh-Session`: the subject names the task.
+- Record the commits in the result of the task: `ops task result <ref> "<summary>. Commits: <sha> (<repo>), …. Session: <ORBH_SESSION_ID>"`. Ops has no field for commits. The field `wip-commits` of the note stays empty.
 
 ## The CLI ops
 
@@ -141,10 +134,10 @@ Use the dev deployment only for work on Ops itself, for example a test of a new 
 
 | Script | Command | Output (JSON) |
 |---|---|---|
-| task-new | `flint shard task task-new "<title>" [--type <type>] [--repo <name>] [--org <org>] [--unplaced \| --subsection <s> \| --project <p> [--folder <f>] \| --master] [--priority <p>] [--assign <member>] [--body-file <path>]` | `{ number, title, path, note, noteLabel, ops }` |
+| task-new | `flint shard task task-new "<title>" [--repo <name>] [--org <org>] [--unplaced \| --subsection <s> \| --project <p> [--folder <f>] \| --master] [--priority <p>] [--assign <member>] [--body-file <path>]` | `{ number, title, path, note, noteLabel, ops }` |
 | task-new for an Ops task that exists | `flint shard task task-new ["<title>"] --ops <ref> [--org <org>] [--body-file <path>]` | The same |
 | task-link | `flint shard task task-link "<(Task) N Title>" [--ops <ref>] [--org <org>] [create options]` | `{ number, title, path, note, noteLabel, ops, created }` |
-| task-sync | `flint shard task task-sync "<(Task) N Title>"`, or the Ops address | `{ number, title, path, ops, status, stage, type, changed, noteLinked }` |
+| task-sync | `flint shard task task-sync "<(Task) N Title>"`, or the Ops address | `{ number, title, path, ops, status, changed, noteLinked }` |
 
 The scripts run `ops` through `NUU_OPS_CLI` (default `ops`). [[dev-knw-task-cli]] § The Note Scripts gives each option, each refusal, and the map of the status.
 
@@ -193,10 +186,10 @@ A headless or subagent Orbh session has no person at the terminal. It loads this
 | Workflow | Purpose |
 |---|---|
 | [[dev-wkfl-task-create_task]] | Make a `todo` task, place it with the hint rule, and scope it |
-| [[dev-wkfl-task-scope_task]] | Research first, then write the scope into the task note, and set `scoped` |
-| [[dev-wkfl-task-do_task]] | Add the task as an object, work, record the WIP commits, set `built`, give a summary, then review |
+| [[dev-wkfl-task-scope_task]] | Research first, then write the scope and the definition of done into the task note |
+| [[dev-wkfl-task-do_task]] | Add the task as an object, work, make the WIP commits, write the result with the commits, give a summary, then review |
 | [[dev-wkfl-task-create_and_do_task]] | Create a task, add it as an object, and do it in one run |
-| [[dev-wkfl-task-review_task]] | A second session checks the work against the task note, and sets `reviewed` or writes the findings |
+| [[dev-wkfl-task-review_task]] | A second session checks the work against the task note, and writes a pass into the result or the findings into the note |
 | [[dev-wkfl-task-do_task_group]] | Make or take a task group, add each of its tasks as an object, and do each task in it |
 
 ## Skills
@@ -219,10 +212,10 @@ A headless or subagent Orbh session has no person at the terminal. It loads this
 |---|---|
 | [[dev-knw-task-model]] | The model: C0 to C4 of the contract |
 | [[dev-knw-task-cli]] | Each verb of `ops task`, the note scripts, and the verbs of `flint orbh objects` for a task |
-| [[dev-knw-task-dev]] | `task.dev@0.1`: the fields, the stages, and the WIP commit rule |
+| [[dev-knw-task-commits]] | The WIP commit rule: the subject, only your paths, the trailers, and the commits in the result |
 
 ## Templates
 
 | Template | Purpose |
 |---|---|
-| None of its own | A task note uses the template `tmp-proj-task-v0.2` of the Projects shard, with the fields `ops`, `task-type`, and `stage`. `task-new` writes it. See [[dev-knw-task-model]] § The Task Note. |
+| None of its own | A task note uses the template `tmp-proj-task-v0.2` of the Projects shard, with the field `ops`. `task-new` writes it. See [[dev-knw-task-model]] § The Task Note. |

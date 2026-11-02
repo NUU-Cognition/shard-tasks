@@ -6,7 +6,7 @@
     "task": {
       "kind": "text",
       "required": false,
-      "description": "The address of the task to scope, for example @v1/nuucognition/task.dev/<id>#ops. Give it at the open for a task that exists. Else Stage 3 creates the task: then set it with flint shard invocations set-input <id> task=<address>."
+      "description": "The address of the task to scope, for example @v1/nuucognition/task/<id>#ops. Give it at the open for a task that exists. Else Stage 3 creates the task: then set it with flint shard invocations set-input <id> task=<address>."
     }
   },
   "then": [
@@ -59,8 +59,8 @@
       "evidence": "required",
       "stage": "Stage 5: Finalise",
       "next": {
-        "interactive": "Resolve or defer each open question. For a task.dev, set the stage: ops task stage {{task}} scoped. Run flint shard task task-sync {{task}}. Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
-        "headless": "Resolve or defer each open question. For a task.dev, set the stage: ops task stage {{task}} scoped. Run flint shard task task-sync {{task}}. Close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the do_task command in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+        "interactive": "Resolve or defer each open question. Check that the task note has the scope and the definition of done. Run flint shard task task-sync {{task}}. Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
+        "headless": "Resolve or defer each open question. Check that the task note has the scope and the definition of done. Run flint shard task task-sync {{task}}. Close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the do_task command in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
       }
     }
   ],
