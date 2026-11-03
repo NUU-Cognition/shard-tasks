@@ -35,6 +35,7 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 - Read the task: `ops task show <address> --json`, and its task note (the field `note`; its file is `response.presences[0].path` of `flint resolve <note> --json`). Read the scope and the definition of done in the note, the result (`task.result`: the summary, the commits, and the session of the work), and the attachments.
 - **A second session.** Find the session of the work in two places: the `Session:` part of the result, and the trailer `Orbh-Session` of each commit that the result names (`git log -1 --format='%(trailers:key=Orbh-Session,valueonly)' <sha>` in its repository). When one of them is this session (`$ORBH_SESSION_ID`), stop: a session does not review its own work. Tell the person (or return the refusal to the dispatcher).
 - **No result.** When the task has no result, the work is not done yet. Tell the person, and ask whether to continue.
+- **The review request.** `ops task show <address> --json` gives the open review requests (`reviews.open`). The note of a request says what to check: check it too.
 - Add the task as an object: `flint orbh objects add <address> --subscribe` ([[dev-sk-task-use_task]]).
 - For each item of the definition of done:
   - Check that the work exists: the files, the code, and the commits that the result names (`git show --stat <sha>` in the repository of the `repo` link). Find a commit that the result does not name with `git log --grep "Task <short id>"`.
@@ -67,7 +68,7 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 - **Fail** (an item is still open):
   - Write the findings under `## Review Findings` in the task note. Each finding has the item, the fact, and the next step.
   - Add the verdict to the result: `ops task result <address> "<the result>. Review found <n> open items: see Review Findings in the task note."`. Keep the text of the result of before.
-- Do not close the task. A person closes it, or asks an agent to close it with [[dev-sk-task-close_task]].
+- Do not close the task, and do not give the verdict of an open review request. The reviewer reads your verdict in the result, and approves the request in Your Reviews (this closes the task), or asks for changes. When the reviewer asks you to give the verdict, run `ops task review approve <address>` or `ops task review changes <address> --note "<the findings>"`.
 - Copy the state into the note: `flint shard task task-sync <address>`. Add a `# Task Log` line with the verdict.
 - With an open invocation, close it with `--outcome done`.
 

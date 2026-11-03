@@ -82,12 +82,14 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 
 - Give the person a summary: what changed, the commits, the tests, and each item of the definition of done.
 - The review comes next. A second session checks the work: [[dev-wkfl-task-review_task]] with `flint shard invoke task review_task --input task=<address>`. Do not review your own work.
+- **Ask for the review in Ops.** When the person wants a review, run `ops task review request <address> --note "<the summary, the commits, and what to check>"`. The request goes to the owner of the task, into **Your Reviews** of the web app, with a notification. Give `--to <member>` when the person names another reviewer. The reviewer approves the work there (this closes the task), or asks for changes.
 - Converse to refine. When the person asks for a change, do it (Stage 2), write the result again with each commit (Stage 3), and run `task-sync` again.
 - When the person asks for the review now, give the review command, or dispatch the review to a second session when the person asks for it. Then skip the step `close`: `flint shard step skip close --reason 'toward review_task'`, and close the invocation with `--outcome done`.
 - Once the person confirms the summary, progress to the next stage.
 
 > [!headless]
 > Do not wait for a person, and do not do Stage 5.
+> - Ask for the review: `ops task review request <address> --note "<the summary, the commits, and what to check>"`. The owner of the task gets it in Your Reviews. When the request refuses with `review_no_reviewer` (a task of a team with no owner), do not guess a reviewer: put the review command in the result.
 > - Set `flint orbh session set phase complete`.
 > - With an open invocation, mark the step `review` done, and close the invocation: `flint shard invocations close --outcome done`. The close prints the `review_task` command.
 > - When the close of the invocation prints `back in:`, a parent frame is open. Do not return: keep the result for the parent frame, and continue it.
@@ -95,7 +97,7 @@ You can run this workflow as a shard invocation. The invocation is a durable rec
 
 ## Stage 5: Close
 
-- When the person confirms, close the task with [[dev-sk-task-close_task]]: `ops task close <address>`, then `flint shard task task-sync <address>`. Keep the result of Stage 3: it names the commits.
+- When the person confirms, close the task with [[dev-sk-task-close_task]]: `ops task close <address>`, then `flint shard task task-sync <address>`. Keep the result of Stage 3: it names the commits. A close cancels the open review requests of the task.
 - When the person wants the review first, do not close: leave the task open for the review, and close the invocation.
 - With an open invocation, close it with `--outcome done`.
 

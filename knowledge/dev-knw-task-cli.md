@@ -53,6 +53,19 @@ The result is also the record of the commits and the session of the work: [[dev-
 | `ops task done <ref>` | A present verb: the same as `close` with `completed`. |
 | `ops task reopen <ref>` | A present verb: set `doing`, and clear the outcome. |
 
+## Review
+
+A review request puts a task in the review queue of a person: **Your Reviews** in the web app, with a notification ([[dev-knw-task-model]] § Review Requests). The verbs take the task: the CLI finds the open request where you are the reviewer (a verdict) or the requester (a cancel). With no match, the verb writes nothing (exit 2).
+
+| Command | What it does |
+|---|---|
+| `ops task review request <ref> [--to <member>] [--note "<text>"]` | Ask for a review. With no `--to`, the reviewer is the owner of the task. A second request to the same reviewer changes the note of the open request. `--note -` reads stdin. |
+| `ops task review approve <ref> [--note "<text>"] [--keep-open]` | The reviewer approves. This closes the task as `completed`, unless `--keep-open`. |
+| `ops task review changes <ref> [--note "<text>"]` | The reviewer asks for changes. The task stays open, and a done task opens again. The note goes to the requester. |
+| `ops task review dismiss <ref> [--note "<text>"]` | The reviewer dismisses the request. Nothing else changes. |
+| `ops task review cancel <ref> [--to <member>]` | The requester withdraws the request. When you asked more than one reviewer, `--to` names one (else `review_ambiguous`). |
+| `ops review list [--org <org>] [--state open\|all]` | The review queue of the caller, every org, oldest first. |
+
 ## Placement
 
 | Command | What it does |

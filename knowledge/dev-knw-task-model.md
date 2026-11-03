@@ -150,6 +150,17 @@ Ops has no field for a review. For `review`, `reviewing`, and `reviewed`, write 
 2. `ops task done <ref>`, and an update to `done` from Strike or Trident, close the task with the outcome `completed`.
 3. A reopen sets `doing` and clears the outcome.
 
+## Review Requests
+
+A review request asks one person to review a task (Ops Task 402). It is an item of the review queue of that person: the page **Your Reviews** of the web app lists the open requests of every org, oldest first.
+
+1. With no reviewer, the reviewer is the owner of the task. A task with no owner takes the caller in a personal org, and refuses with `review_no_reviewer` in a team org.
+2. One open request for each task and reviewer. A second request changes its note.
+3. The reviewer approves (this closes the task as `completed`, unless keep open), asks for changes (the task stays open, and a done task opens again), or dismisses. The requester can cancel.
+4. A close or a delete of the task cancels its open requests. An undo brings them back.
+5. The agent of a person writes as that person, so a request of an agent to its own person is a request to oneself. That person still gets the notification, from the agent.
+6. The rows of the web app show **In review** while a request is open.
+
 ## Lineage
 
 A link never deletes history. Each link has a holder (the "from" task) and a target (the "to" task).
@@ -251,3 +262,9 @@ The skill [[dev-sk-task-place_task]] applies the rule.
 | `task_relation_invalid` | A relation that breaks a rule, for example a bad kind or ref, or more than 100 relations |
 | `task_attachment_invalid` | An attachment that breaks a rule, for example both or neither of a task and a task group, or more than 100 live attachments |
 | `task_unplaced_with_home` | A write gives a home and `unplaced` together |
+| `review_no_reviewer` | A review request of a task of a team with no owner: give `--to <member>` |
+| `review_task_done` | A review request of a done task: reopen it first |
+| `review_not_reviewer` | A verdict by a person who is not the reviewer |
+| `review_not_requester` | A cancel by a person who did not ask for the review |
+| `review_not_open` | A verdict or a cancel of a request that is closed already |
+| `review_ambiguous` | A cancel that matches two of your requests (the CLI): give `--to <member>` |
