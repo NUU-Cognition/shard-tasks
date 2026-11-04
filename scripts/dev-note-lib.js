@@ -6,8 +6,8 @@
 // - the task note in the Flint (Mesh/Types/Tasks/(Task) <n> <title>.md, the template tmp-proj-task-v0.2), which holds
 //   the content and the field `ops` (the address of the Ops task);
 // - the Ops task, which holds the state and the field `note` (the address of the task note).
-// Ops owns the status, the outcome, and the result. task-sync copies the status and the date of the close into the
-// note, in one direction only. Ops has no task types and no stages.
+// Ops owns the status and the result. task-sync copies the status and the date of the close into the note, in one
+// direction only. Ops has no task types, no stages, and no outcome.
 //
 // The rules:
 // - Node built-ins only. The note edits use task-lib (the copy of the Projects task-lib): a lock for each note, no
@@ -513,19 +513,15 @@ function isBlocked(task) {
 
 /**
  * The note status of an Ops task (N6): todo → todo; doing → in-progress; an open task (todo or doing) with the flag
- * blocked → blocked; done with the outcome completed (or no outcome) → done, dropped → deprecated, superseded →
- * superseded.
+ * blocked → blocked; done → done. A task has no outcome (removed 2026-11-04), so no Ops task gives deprecated or
+ * superseded: an old row with an outcome reads as done too.
  */
 function noteStatus(task) {
   const checkbox = task.checkbox;
   if ((checkbox === 'todo' || checkbox === 'doing') && isBlocked(task)) return 'blocked';
   if (checkbox === 'todo') return 'todo';
   if (checkbox === 'doing') return 'in-progress';
-  if (checkbox === 'done') {
-    if (task.outcome === 'dropped') return 'deprecated';
-    if (task.outcome === 'superseded') return 'superseded';
-    return 'done';
-  }
+  if (checkbox === 'done') return 'done';
   throw new TaskError(`The Ops task has the status "${checkbox}", not todo, doing, or done. Nothing changed.`);
 }
 

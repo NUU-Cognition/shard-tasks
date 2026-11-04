@@ -38,7 +38,7 @@ Use the dev deployment only for work on Ops itself, for example a test of a new 
 | `ops task note <ref> --clear` | Remove the note and its label. An undo in the web brings them back. |
 | `ops task list [--all] [--unplaced] [--status open\|todo\|doing\|done\|all] [--limit <n>] [present scope flags]` | List tasks. The default status is `open`, and the default limit is 200 tasks. `--all` lists every task of the org, newest first, and reads it page by page. |
 | `ops task search <query> [--limit <n>]` | Search the tasks of the org by title (default 25, at most 100). Use it to find a task with the same intent before a create. |
-| `ops task show <ref>` | Show a task with its status, outcome, result, lineage, task groups, relations, and attachments. The text has a line `note  <label, else the address>` and a line with the open link. |
+| `ops task show <ref>` | Show a task with its status, owner, the people looped in, result, lineage, task groups, relations, attachments, and open review requests. The text has a line `note  <label, else the address>` and a line with the open link. |
 | `ops task update <ref> [--title <t>] [--body <md\|->\|--body-file <path>] [--priority <p\|none>] [--assign <member\|none>]` | A present verb: change the title, the body, the priority, or the owner. |
 | `ops task start <ref>` | A present verb: set the status `doing`. |
 | `ops task result <ref> "<text>"` | Write the result of the task. `-` reads stdin; `""` clears it. |
@@ -49,22 +49,31 @@ The result is also the record of the commits and the session of the work: [[dev-
 
 | Command | What it does |
 |---|---|
-| `ops task close <ref> [--outcome completed\|dropped\|superseded] [--result "<text>"]` | Close the task with an outcome (default `completed`), at any time. `--result -` reads stdin. |
-| `ops task done <ref>` | A present verb: the same as `close` with `completed`. |
-| `ops task reopen <ref>` | A present verb: set `doing`, and clear the outcome. |
+| `ops task close <ref> [--result "<text>"]` | Close the task (`done`) at any time. `--result -` reads stdin. A task has no outcome: `--outcome` is an unknown option. |
+| `ops task done <ref>` | A present verb: the same as `close` with no result. |
+| `ops task reopen <ref>` | A present verb: set `doing`. The result stays. |
 
 ## Review
 
-A review request puts a task in the review queue of a person: **Your Reviews** in the web app, with a notification ([[dev-knw-task-model]] § Review Requests). The verbs take the task: the CLI finds the open request where you are the reviewer (a verdict) or the requester (a cancel). With no match, the verb writes nothing (exit 2).
+A review request puts a task in the review queue of a person: **Your Reviews** in the web app, with a notification ([[dev-knw-task-model]] § Review Requests). The request also loops the reviewer into the task, unless the reviewer is the owner: the reviewer then hears every comment on the task. The verbs take the task: the CLI finds the open request where you are the reviewer (a verdict) or the requester (a cancel). With no match, the verb writes nothing (exit 2).
 
 | Command | What it does |
 |---|---|
-| `ops task review request <ref> [--to <member>] [--note "<text>"]` | Ask for a review. With no `--to`, the reviewer is the owner of the task. A second request to the same reviewer changes the note of the open request. `--note -` reads stdin. |
-| `ops task review approve <ref> [--note "<text>"] [--keep-open]` | The reviewer approves. This closes the task as `completed`, unless `--keep-open`. |
+| `ops task review request <ref> [--to <member>] [--note "<text>"]` | Ask for a review. With no `--to`, the reviewer is the owner of the task. A second request to the same reviewer changes the note of the open request. The request loops the reviewer into the task. `--note -` reads stdin. |
+| `ops task review approve <ref> [--note "<text>"] [--keep-open]` | The reviewer approves. This closes the task, unless `--keep-open`. |
 | `ops task review changes <ref> [--note "<text>"]` | The reviewer asks for changes. The task stays open, and a done task opens again. The note goes to the requester. |
 | `ops task review dismiss <ref> [--note "<text>"]` | The reviewer dismisses the request. Nothing else changes. |
 | `ops task review cancel <ref> [--to <member>]` | The requester withdraws the request. When you asked more than one reviewer, `--to` names one (else `review_ambiguous`). |
-| `ops review list [--org <org>] [--state open\|all]` | The review queue of the caller, every org, oldest first. |
+| `ops review list [--org <org>] [--state open\|all]` | The review queue of the caller, every org, oldest first. Then the section `you asked for`: the open requests that you asked of other people, each with its reviewer (`--json`: `sent`). |
+
+## Looped In
+
+The people looped into a task follow it beside its owner, and each one hears every comment on it ([[dev-knw-task-model]] § Looped In). A review request loops in the reviewer, and a mention in a comment loops in the mentioned member.
+
+| Command | What it does |
+|---|---|
+| `ops task loop add <ref> <person>` | Loop a member of the org into the task. `<person>` is `me`, or a member as `--assign` takes it. The person gets a notification. A person in the loop already changes nothing. A task loops in at most 50 people (`loop_full`). |
+| `ops task loop remove <ref> <person>` | Take a person out of the loop of the task. A person who is not in it changes nothing. |
 
 ## Placement
 
@@ -81,9 +90,9 @@ The Flint id is `flint.id` of `flint org show --json`.
 
 | Command | What it does |
 |---|---|
-| `ops task split <ref> --part "<title>" [--part "<title>" ...] [--keep-open]` | Split the task into new parts. The old task closes with `superseded`, unless `--keep-open`. |
+| `ops task split <ref> --part "<title>" [--part "<title>" ...] [--keep-open]` | Split the task into new parts. An open old task closes, unless `--keep-open`. |
 | `ops task merge <ref> <ref>... (--into <ref> \| --title "<title>")` | Merge the tasks into a survivor: the `--into` task, or a new task with `--title` (it gets the home of the first task). |
-| `ops task continue <ref> [--title "<title>"]` | Make a continuation of the task (default title `<old title> (continued)`). An open old task closes with `superseded`. |
+| `ops task continue <ref> [--title "<title>"]` | Make a continuation of the task (default title `<old title> (continued)`). An open old task closes. |
 | `ops task chain <ref> <ref> [<ref>...]` | Chain two or more tasks in this order: each task is `after` the task before it. |
 | `ops task unchain <ref>` | Remove the `after` link of the task. The tasks after it keep their links. |
 
@@ -111,7 +120,7 @@ The `ref2` of a session is its session address: `@v1/<org>/session/<uuid>#flint/
 
 | Command | The keys of `--json` |
 |---|---|
-| `show` | `address`, `note`, `noteLabel`, `noteUrl` (each `null` when the task has no note), `task` (the row with `checkbox`, `outcome`, `result`, `unplaced`, `homeLabel`, `groupIds`, `chainReady`, …), `links`, `groups`, `relations`, `attachments`, `launches`, `breadcrumb`, `orgSlug`, `url` |
+| `show` | `address`, `note`, `noteLabel`, `noteUrl` (each `null` when the task has no note), `task` (the row with `checkbox`, `result`, `unplaced`, `homeLabel`, `groupIds`, `chainReady`, `loopedIn`, …), `links`, `groups`, `relations`, `attachments`, `launches`, `breadcrumb`, `orgSlug`, `url`, `loopedIn` (each `{userId, name}`), `reviews` |
 | `create` | `id`, `address`, `orgSlug`, `title`, and the placement; with `--note`, also `note`, `noteLabel`, and `noteUrl` |
 | `note` | `taskId`, `address`, `note`, `noteLabel`, `noteUrl` (each note field `null` after `--clear`) |
 | `split` | `id` (the old task), `taskIds`, `tasks` (each `{id, title, address}`), `keepOpen` |

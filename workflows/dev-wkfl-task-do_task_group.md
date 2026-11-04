@@ -82,7 +82,7 @@ Once each task has its result, or is closed or removed, progress to the next sta
 > - Set `flint orbh session set phase complete`.
 > - Close the invocation with `--outcome done`.
 > - When the close of the invocation prints `back in:`, a parent frame is open. Do not return: keep the result for the parent frame, and continue it.
-> - Else return: `flint orbh session return --finish "Did task group <address> <title>: <n> tasks. <one line for each task: address, status or outcome, commits>. Next: <the review_task command of each open task>."`
+> - Else return: `flint orbh session return --finish "Did task group <address> <title>: <n> tasks. <one line for each task: address, status, commits>. Next: <the review_task command of each open task>."`
 
 # Output
 

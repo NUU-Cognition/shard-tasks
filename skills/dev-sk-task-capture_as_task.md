@@ -27,7 +27,7 @@ Record the recent work of the session as a task in Ops, when the work started wi
 4. **Place it** with [[dev-sk-task-place_task]].
 5. **Add it as an object**: `flint orbh objects add <address> --subscribe`.
 6. **Record the commits.** Name each commit of the work in the result in step 7, as `<sha> (<repo>)` ([[dev-knw-task-commits]]).
-7. **Set the state.** Write the result with the commits: `ops task result <address> "<summary>. Commits: <sha> (<repo>), …. Session: <ORBH_SESSION_ID>"`. A task that exists from step 1 keeps the text of its result of before. Close the task with `completed` when the person confirms ([[dev-sk-task-close_task]]), or leave it open for a review ([[dev-wkfl-task-review_task]]). In a headless session, close it only when the prompt says so.
+7. **Set the state.** Write the result with the commits: `ops task result <address> "<summary>. Commits: <sha> (<repo>), …. Session: <ORBH_SESSION_ID>"`. A task that exists from step 1 keeps the text of its result of before. Close the task when the person confirms ([[dev-sk-task-close_task]]), or leave it open for a review ([[dev-wkfl-task-review_task]]). In a headless session, close it only when the prompt says so.
 8. **Copy the state into the note:** `flint shard task task-sync <address>` (also after a close).
 9. Report the address, the note, the place, the commits, and the state to the person (or in the result).
 

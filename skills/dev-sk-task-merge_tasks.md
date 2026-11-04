@@ -1,5 +1,5 @@
 ---
-description: "Merge two or more tasks into one survivor with ops task merge: the other tasks get merged-into and close as superseded"
+description: "Merge two or more tasks into one survivor with ops task merge: the other tasks get merged-into, and the open ones close"
 ---
 
 > [!important] THIS FILE IS AN INSTRUCTION. WHEN REFERENCED IT IS MEANT TO BE TAKEN AS AN ACTION.
@@ -23,12 +23,12 @@ Merge tasks that have one intent (for example, two tasks for the same fault) int
    ```bash
    ops task merge <ref> <ref> [<ref>...] (--into <ref> | --title "<title>") --json
    ```
-   Each other task gets `merged-into` the survivor, and an open one closes with `superseded`. The output gives the survivor as `taskId` and `address`. When the output has `address: null`, the write is done: do not run it again. Run the read that the stderr message names (`ops task show <id> --json`) to get the address.
+   Each other task gets `merged-into` the survivor, and an open one closes. The output gives the survivor as `taskId` and `address`. When the output has `address: null`, the write is done: do not run it again. Run the read that the stderr message names (`ops task show <id> --json`) to get the address.
 4. **Join the notes.**
    - **With `--into`:** merge makes no new task. Write the context, the scope, and each item of the definition of done of the merged tasks into the task note of the survivor.
    - **With `--title`:** Ops made the survivor, and it has no note yet. Each task that the shard makes has a note (N6 of Task 1291, with the amendment of 2026-10-20), so make it now: write the joined text to a temporary file, and run `flint shard task task-new --ops <survivor address> --body-file <file>`. Do not run `task-new` with a title: that makes a second Ops task. `task-new --ops` links the survivor and copies its state into the note.
 
-   Then sync each note: `flint shard task task-sync <address>` for the survivor and for each merged task (an open one becomes `superseded`). Add a `# Task Log` line in each merged note with the survivor.
+   Then sync each note: `flint shard task task-sync <address>` for the survivor and for each merged task (an open one becomes `done`). Add a `# Task Log` line in each merged note with the survivor.
 5. **Join the results.** Name the commits of the merged tasks in the result of the survivor: `ops task result <survivor> "<text>. Commits: <sha> (<repo>), …"`. Keep the text that the result of the survivor has already. The result of each merged task names its commits (`ops task show <ref> --json`).
 6. **Add the survivor.** When a merged task is an object of the session, add the survivor as an object (`flint orbh objects add <survivor address> --subscribe`), and remove the item of the merged task (`flint orbh objects remove <id>`).
 7. Report the address and the note of the survivor and of each merged task.
@@ -36,4 +36,4 @@ Merge tasks that have one intent (for example, two tasks for the same fault) int
 # Output
 
 - One survivor with the joined task note
-- Each other task with `merged-into` the survivor, closed `superseded` when it was open
+- Each other task with `merged-into` the survivor, closed when it was open

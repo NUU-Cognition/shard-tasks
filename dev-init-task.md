@@ -12,7 +12,7 @@ The Tasks shard gives agents one way to work with the tasks of NUU Operations (O
 
 | File | Why |
 |---|---|
-| [[dev-knw-task-model]] | The model: the terms, the fields, the status, the outcome, the result, the close rules, lineage, task groups, and placement |
+| [[dev-knw-task-model]] | The model: the terms, the fields, the status, the result, the close rules, the review requests, the people looped in, lineage, task groups, and placement |
 | [[dev-knw-task-cli]] | Each command of `ops task`, the scripts `task-new`, `task-link`, and `task-sync`, and the verbs of `flint orbh objects` for a task |
 
 Read [[dev-knw-task-commits]] too before you commit the work of a task.
@@ -25,8 +25,8 @@ Read [[dev-knw-task-commits]] too before you commit the work of a task.
 | task note | The Flint note of a task: `Mesh/Types/Tasks/(Task) <n> <title>.md` with the tag `#proj/task`. It holds the content. |
 | note address | The address of a task note: `@v1/<org>/task/<note id>#flint/<flint>`. Ops keeps it in the field `note`. |
 | status | The Ops `checkbox`: `todo`, `doing`, or `done`. Every task has one. `blocked` is a flag. |
-| outcome | Only for a done task: `completed`, `dropped`, or `superseded`. |
-| result | The text of what the work gave. It names the commits and the session of the work. |
+| result | The text of what the work gave. It names the commits and the session of the work. A task has no outcome: a done task is done, and the result says what it gave. |
+| looped in | The people who follow a task beside its owner. Each one hears every comment on the task. A review request loops in the reviewer. |
 | subtask | A Strike target mounted on an Ops task. Ops does not show subtasks. |
 | task group | A set of tasks that are done together, usually in one session. Each task stays a full task. |
 | lineage | The links `split-from`, `merged-into`, `continues-from`, and `after` (chain). |
@@ -45,10 +45,10 @@ Each task that this shard makes has two parts, linked both ways:
 | Part | Where | It holds | The link |
 |---|---|---|---|
 | Task note | `Mesh/Types/Tasks/(Task) <n> <title>.md`, from the template `tmp-proj-task-v0.2` of the Projects shard | The content: the context, the requirements, the definition of done, the Task Log, and the notes | Its field `ops` holds the Ops address |
-| Ops task | NUU Ops | The state: the status, the outcome, the result, the place, the lineage, the task groups, and the attachments | Its field `note` holds the note address, and its body stays empty |
+| Ops task | NUU Ops | The state: the status, the result, the place, the lineage, the task groups, and the attachments | Its field `note` holds the note address, and its body stays empty |
 
 - **Make each task with `task-new`:** `flint shard task task-new "<title>" …`. It writes the note, makes the Ops task, and links both. Do not make an Ops task alone with `ops task create`, and do not write a task note by hand.
-- **Ops owns the state.** Ops owns the status, the outcome, and the result. `flint shard task task-sync <ref>` copies the status and the date of the close into the note, in one direction only. Do not edit `status`, `completed`, or `ops` of the note by hand: change the Ops task, then run `task-sync`. An old note can have the fields `task-type` and `stage`: `task-sync` clears them.
+- **Ops owns the state.** Ops owns the status and the result. `flint shard task task-sync <ref>` copies the status and the date of the close into the note, in one direction only. Do not edit `status`, `completed`, or `ops` of the note by hand: change the Ops task, then run `task-sync`. An old note can have the fields `task-type` and `stage`: `task-sync` clears them.
 - **A task with no note.** A task that a person makes in the web, or that Strike makes, has no note and keeps its body. Give it a note with `flint shard task task-new --ops <ref>`. Link a note that exists with `flint shard task task-link "<(Task) N Title>" [--ops <ref>]`.
 - **The Ops address stays the key.** The task object, the invocation input `task`, and the attachments use the Ops address. Ops shows the note as "Open in Obsidian".
 - Ops holds all views of tasks. The Flint has no task dashboard of this shard.
@@ -101,17 +101,17 @@ The Flint id is `flint.id` of `flint org show --json`. Then apply the rule:
 
 [[dev-sk-task-place_task]] gives the steps.
 
-## Lifecycle: Status, Outcome, and Close
+## Lifecycle: Status, Result, and Close
 
 ```
-todo → doing → done (completed | dropped | superseded)
+todo → doing → done
           ↑       │
           └───────┘ reopen
 ```
 
-- A close has one outcome: `completed`, `dropped`, or `superseded`. `ops task close` closes a task at any time.
-- A task has no type and no stage. The status and the outcome are the state of the work. Progress goes into the result (`ops task result <ref> "<text>"`): what the work gave, the commits, and the review.
-- A reopen sets `doing` and clears the outcome.
+- A close sets `done`. `ops task close` closes a task at any time. A task has no outcome (removed 2026-11-04): a done task is done. Do not pass `--outcome`: the CLI refuses it.
+- A task has no type and no stage. The status is the state of the work. Progress goes into the result (`ops task result <ref> "<text>"`): what the work gave, the commits, and the review. When the work stops with no successor, say so in the result.
+- A reopen sets `doing` and keeps the result.
 - After each change of the Ops state (a start, a close, a reopen), run `flint shard task task-sync <ref>`, so that the note shows the state.
 
 [[dev-sk-task-close_task]] gives the steps.
@@ -204,7 +204,7 @@ A headless or subagent Orbh session has no person at the terminal. It loads this
 | [[dev-sk-task-continue_task]] | Make a continuation of a task |
 | [[dev-sk-task-chain_tasks]] | Chain tasks in an order |
 | [[dev-sk-task-group_tasks]] | Make or change a task group |
-| [[dev-sk-task-close_task]] | Close a task with one of the three outcomes |
+| [[dev-sk-task-close_task]] | Close a task with its result |
 
 ## Knowledge
 

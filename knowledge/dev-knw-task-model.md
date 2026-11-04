@@ -1,5 +1,5 @@
 ---
-description: "The task model of NUU Ops and the Tasks shard: the two parts of a task (the task note and the Ops task), the terms, the fields, the status, the outcome, and the result, the close rules, lineage, task groups, placement, attachments, and addresses"
+description: "The task model of NUU Ops and the Tasks shard: the two parts of a task (the task note and the Ops task), the terms, the fields, the status and the result, the close rules, the review requests, the people looped in, lineage, task groups, placement, attachments, and addresses"
 ---
 
 # Knowledge: The Task Model
@@ -16,7 +16,8 @@ This file is the model of the task primitive v0.1 (Notepad 237, Task 1287, secti
 | note label | The text that shows the note: `Task <n> · <Flint name>`. |
 | open link | `obsidian://nuu-flint?address=` and the note address (URL-encoded). The NUU Flint plugin opens the note. |
 | status | The Ops `checkbox`: `todo`, `doing`, or `done`. Every task has one. |
-| outcome | Only for a done task: `completed`, `dropped`, or `superseded`. |
+| result | The text of what the work gave. It names the commits and the session of the work. |
+| looped in | The people who follow a task beside its owner. Each one hears every comment on the task. |
 | subtask | A Strike target mounted on an Ops task. Ops does not show subtasks. |
 | task group | A set of tasks that are done together, usually in one session. Each task stays a full task. |
 | lineage | The links `split-from`, `merged-into`, `continues-from`, and `after` (chain). |
@@ -33,11 +34,11 @@ Always write "task group", not "group" alone. Orbh has job groups (`--until-grou
 Each task that the Tasks shard makes has two parts, linked both ways (Task 1291):
 
 - **The task note** holds the content. It lives in the Flint, in `Mesh/Types/Tasks/(Task) <n> <title>.md`, with the template `tmp-proj-task-v0.2` of the Projects shard and the number of the type `Task`. Its field `ops` holds the address of the Ops task.
-- **The Ops task** holds the state: the status, the outcome, the result, the place, the lineage, the task groups, and the attachments. Its field `note` holds the note address, and `noteLabel` holds the note label. Its body stays empty: the note holds the content.
+- **The Ops task** holds the state: the status, the result, the place, the lineage, the task groups, and the attachments. Its field `note` holds the note address, and `noteLabel` holds the note label. Its body stays empty: the note holds the content.
 
 The rules:
 
-- Ops owns the status, the outcome, and the result. `task-sync` copies the status and the date of the close into the note, in one direction only. A change goes to Ops first, then `task-sync` runs.
+- Ops owns the status and the result. `task-sync` copies the status and the date of the close into the note, in one direction only. A change goes to Ops first, then `task-sync` runs.
 - `task-new` makes both parts and links them. `task-link` links a note and an Ops task that exist. `task-new --ops` gives a note to an Ops task that has none.
 - A task that a person makes in the web, or that Strike makes, has no note. It keeps its body, and the rules of the body below apply to it.
 - The Ops address stays the key of the task: the task object of a session, the invocation input `task`, and the attachments use it.
@@ -63,9 +64,9 @@ An old note can have the fields `task-type` and `stage` of the task types of bef
 | `todo` | `todo` |
 | `doing` | `in-progress` |
 | `todo` or `doing`, with the flag `blocked` (Ops gives `{ reason, next?, at }`) | `blocked` |
-| `done`, outcome `completed` (or none) | `done` |
-| `done`, outcome `dropped` | `deprecated` |
-| `done`, outcome `superseded` | `superseded` |
+| `done` | `done` |
+
+A task has no outcome, so `task-sync` writes no `deprecated` and no `superseded`. A note of before with one of them becomes `done` at its next `task-sync`.
 
 - The body has the sections of the template: `# Context`, `# Task Description`, `# Task Requirements`, `# Definition of Done`, `# Task Log`, and `# Notes`. The scope goes into the description and the requirements; each item of the definition of done is a checkbox that a reviewer can check.
 - The steps of the work are subtasks in Strike, not lines of the note.
@@ -80,12 +81,13 @@ These fields are new in v0.1. All of them are optional, so each older row stays 
 
 | Field | Meaning |
 |---|---|
-| `outcome` | `completed`, `dropped`, or `superseded`. Set when the status becomes `done`. |
 | `unplaced` | `true`: the task has no project, deliverable, or section. |
+
+A task has no outcome. Before 2026-11-04 a done task had the field `outcome` (`completed`, `dropped`, or `superseded`). Ops removed it (operator page feedback): a done task is done. `tasks.close` still takes `outcome` and ignores it, so an older `ops` still closes a task.
 
 Ops has no task types. A task has no `type`, `typeVersion`, `stage`, or `fields`, and `ops task show --json` does not give them. Progress goes into the status and the result.
 
-The fields of before stay: `title`, `body`, `checkbox` (the status), `priority`, `ownerUserId`, `blocked`, `result`, and the placement fields `projectId`, `deliverableId`, `subsectionId` (the section), and `folderId` (a backlog folder of before the revamp of ops-command-1021). The revamp adds `parentTaskId` (a subtask), `tag`, and `recurrence`. Task 1291 adds `note` (the note address) and `noteLabel` (the note label), both optional.
+The fields of before stay: `title`, `body`, `checkbox` (the status), `priority`, `ownerUserId`, `blocked`, `result`, and the placement fields `projectId`, `deliverableId`, `subsectionId` (the section), and `folderId` (a backlog folder of before the revamp of ops-command-1021). The revamp adds `parentTaskId` (a subtask), `tag`, and `recurrence`. Task 1291 adds `note` (the note address) and `noteLabel` (the note label), both optional. Ops Task 402 adds `loopedIn` (the users IDs of the people looped in, § Looped In).
 
 ## The Body of a Task With No Note
 
@@ -115,40 +117,40 @@ A task with a note has an empty body. A task with no note (from the web or from 
 - A review writes its findings under `## Review Findings` in the body.
 - To move the content into a note, give the task a note (`task-new --ops <ref>`), and move the text of the body into the note.
 
-## Status and Outcome
+## Status and Result
 
 ```
-todo → doing → done (outcome: completed | dropped | superseded)
+todo → doing → done
           ↑       │
-          └───────┘ reopen (clears the outcome)
+          └───────┘ reopen (keeps the result)
 ```
 
 - Every task has one status: `todo`, `doing`, or `done`. `blocked` is a flag, not a fourth status.
-- A done task has one outcome. The default is `completed`. `dropped`: the work stops with no successor. `superseded`: another task takes the work (split, merge, or continue).
-- A reopen sets `doing` and clears the outcome.
+- A done task is done. It has no outcome. The result says what the work gave. When the work stops with no successor, the result says so. When another task takes the work, the lineage link says so (split, merge, or continue).
+- A reopen sets `doing` and keeps the result.
 - **Who is an agent.** A write is by an agent when it has an Orbh session mark: the CLI `ops` sends `X-Agent-Session` from `ORBH_SESSION_ID`. Every other write is by a person (the web app, or `ops` in a terminal with no Orbh session). The mark is provenance, not security. So an agent never removes `ORBH_SESSION_ID` to write as a person.
 
 ### From a Flint Task File
 
-The statuses of the Projects shard map to the status and the outcome of an Ops task. Use the map when you move the work of a Flint task file to an Ops task.
+The statuses of the Projects shard map to the status of an Ops task. Use the map when you move the work of a Flint task file to an Ops task.
 
-| Task file status | Status | Outcome |
+| Task file status | Status | Also |
 |---|---|---|
 | `todo` | `todo` | — |
 | `in-progress` | `doing` | — |
 | `review`, `reviewing`, `reviewed` | `doing` | — |
-| `done` | `done` | `completed` |
+| `done` | `done` | — |
 | `blocked`, `deferred` | The status before, with the flag `blocked` | — |
-| `deprecated` | `done` | `dropped` |
-| `superseded` | `done` | `superseded` |
+| `deprecated` | `done` | The result says that the work stopped, and why |
+| `superseded` | `done` | A lineage link from the task that takes the work (`ops task link <new task> <old task>`), and a result that names it |
 
 Ops has no field for a review. For `review`, `reviewing`, and `reviewed`, write the state of the review in the result.
 
 ## The Close Rules
 
-1. `ops task close <ref>` closes the task at any time, with one outcome: `completed` (the default), `dropped`, or `superseded`.
-2. `ops task done <ref>`, and an update to `done` from Strike or Trident, close the task with the outcome `completed`.
-3. A reopen sets `doing` and clears the outcome.
+1. `ops task close <ref> [--result "<text>"]` closes the task at any time. A task has no outcome: do not pass `--outcome` (the CLI refuses it).
+2. `ops task done <ref>`, and an update to `done` from Strike or Trident, close the task too.
+3. A reopen sets `doing` and keeps the result.
 
 ## Review Requests
 
@@ -156,10 +158,21 @@ A review request asks one person to review a task (Ops Task 402). It is an item 
 
 1. With no reviewer, the reviewer is the owner of the task. A task with no owner takes the caller in a personal org, and refuses with `review_no_reviewer` in a team org.
 2. One open request for each task and reviewer. A second request changes its note.
-3. The reviewer approves (this closes the task as `completed`, unless keep open), asks for changes (the task stays open, and a done task opens again), or dismisses. The requester can cancel.
+3. The reviewer approves (this closes the task, unless keep open), asks for changes (the task stays open, and a done task opens again), or dismisses. The requester can cancel.
 4. A close or a delete of the task cancels its open requests. An undo brings them back.
 5. The agent of a person writes as that person, so a request of an agent to its own person is a request to oneself. That person still gets the notification, from the agent.
 6. The rows of the web app show **In review** while a request is open.
+7. A request loops the reviewer into the task (§ Looped In), unless the reviewer is the owner. The reviewer then hears every comment on the task.
+8. **Your Reviews** also lists the open requests that you asked of other people ("You asked for"). `ops review list` shows them in the section `you asked for`.
+
+## Looped In
+
+The people looped into a task follow it beside its owner (Ops Task 402, amendment 1). Each one hears every comment on the task. A task loops in at most 50 people (`loop_full`).
+
+- A review request loops in the reviewer, unless the reviewer is the owner.
+- A mention of a member in a comment loops in that member.
+- A person loops in a member with the field "Looped in" of the task dialog, or with `ops task loop add <ref> <person>`. The person gets a notification. `ops task loop remove <ref> <person>` takes a person out.
+- `ops task show` names the people looped in.
 
 ## Lineage
 
@@ -172,9 +185,9 @@ A link never deletes history. Each link has a holder (the "from" task) and a tar
 | `continues-from` | The continuation | The old task | `ops task continue` |
 | `after` | The later task | The task before it | `ops task chain` |
 
-- **Split.** Each part becomes a new task with the home and the relations of the old task. The old task closes with `superseded`, unless `--keep-open`.
-- **Merge.** With `--into <ref>`, that task is the survivor. Else a new task with `--title` and the home of the first task is the survivor. Each other task gets `merged-into`, and an open one closes with `superseded`.
-- **Continue.** A new task with the home of the old task gets `continues-from`. The default title is `<old title> (continued)`. An open old task closes with `superseded`. A done old task stays done.
+- **Split.** Each part becomes a new task with the home and the relations of the old task. An open old task closes, unless `--keep-open`.
+- **Merge.** With `--into <ref>`, that task is the survivor. Else a new task with `--title` and the home of the first task is the survivor. Each other task gets `merged-into`, and an open one closes.
+- **Continue.** A new task with the home of the old task gets `continues-from`. The default title is `<old title> (continued)`. An open old task closes. A done old task stays done.
 - **Chain.** Each task after the first gets `after` the task before it. A task holds at most one `after` link: a new chain replaces it. A cycle refuses (`task_link_cycle`). A task in a chain is **ready** when the task before it is done.
 
 ## Task Groups
@@ -268,3 +281,4 @@ The skill [[dev-sk-task-place_task]] applies the rule.
 | `review_not_requester` | A cancel by a person who did not ask for the review |
 | `review_not_open` | A verdict or a cancel of a request that is closed already |
 | `review_ambiguous` | A cancel that matches two of your requests (the CLI): give `--to <member>` |
+| `loop_full` | A task that loops in 50 people already: take a person out first (`ops task loop remove <ref> <person>`) |
