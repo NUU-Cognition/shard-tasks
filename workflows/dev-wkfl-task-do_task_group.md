@@ -62,31 +62,38 @@ Do the tasks one at a time, in the order of Stage 1. For each task:
 3. Tick the items of the definition of done in the task note of this task (a task with no note: give it one with `flint shard task task-new --ops <ref>`).
 4. Write the result of this task, with each of its commits and the session: `ops task result <ref> "<text>. Commits: <sha> (<repo>), …. Session: $ORBH_SESSION_ID"`. Name only the commits of this task.
 5. Copy the state into the note: `flint shard task task-sync <ref>`.
-6. **Close this task alone** when each item of its definition of done is met and the person confirms ([[dev-sk-task-close_task]], which runs `task-sync`). In a headless session, or when the person wants a review first, leave it open for its review.
-7. When a task becomes too big for this session, remove it from the task group (`ops task group remove <group> <ref>`), and tell the person. It needs its own session.
+6. **Ask for the review of this task in Ops**, right after its result and its sync, and before its close. Each finished task gets exactly one request. The work of a task is finished when each item of its definition of done is met. Do not wait for the person to ask for it:
+   ```bash
+   ops task review request <ref> --note "<the summary of this task, its commits, and what to check>" --json
+   ```
+   Name only the commits of this task in the note. With no `--to`, the reviewer is the owner of the task. Give `--to <member>` when the person names another reviewer. A task of a team with no owner refuses with `review_no_reviewer`: then run the command again with `--to me` (`me` is the operator, because `ops` runs with the sign-in of the operator). Do not guess another reviewer. Record the `itemId` and the reviewer of this task, and add a `# Task Log` line with them. When the request fails for another reason, record the error code and the review command. After a change of the result, run the same command again: to the same reviewer it changes the note of the open request (`again: true`) and makes no second request.
+   **A task that is not finished gets no request.** When its work is blocked or not complete, write the blocker under `# Notes` in its task note, and keep the blocker for the summary.
+7. **Close this task alone** only after its review request is recorded, when the person confirms ([[dev-sk-task-close_task]], which runs `task-sync`). A close cancels the open requests of the task (`task_closed`). In a headless session, or when the person wants the review first, leave it open for its review.
+8. When a task becomes too big for this session, remove it from the task group (`ops task group remove <group> <ref>`), and tell the person. It needs its own session.
 
-Once each task has its result, or is closed or removed, progress to the next stage.
+Once each task has its result and its recorded review request, or its blocker, or is closed or removed, progress to the next stage.
 
 > [!headless]
 > - Set `flint orbh session set phase implementing`, and update `progress` after each task.
-> - When a task is blocked, write the blocker under `# Notes` in its task note, and go on to the next task. Ask with a deferred request only when no task can continue. A subagent returns the blocker to its dispatcher.
+> - Ask for the review of each finished task with no person, right after its result and its sync (step 6, with `--json`). Keep the `itemId` and the reviewer of each one for the result.
+> - When a task is blocked, write the blocker under `# Notes` in its task note, ask for no review of it, and go on to the next task. Ask with a deferred request only when no task can continue. A subagent returns the blocker to its dispatcher.
 
 ## Stage 4: Summary and Review Handoff
 
-- Give the person a summary for each task: the address, what changed, the commits, the status, and the close or the next step.
+- Give the person a summary for each task: the address, what changed, the commits, the status, the review request (the reviewer and the `itemId` of Stage 3) or the blocker, and the close or the next step.
 - Each task that is still open needs a review in a second session: `flint shard invoke task review_task --input task=<address>`, one for each task. Give the commands.
-- **Ask for the review in Ops, one request for each task.** For each task that is still open with its result, run `ops task review request <ref> --note "<the summary of this task, its commits, and what to check>"`. Name only the commits of that task in its note. The request goes to the owner of the task, into **Your Reviews** of the web app, with a notification. Give `--to <member>` when the person names another reviewer. A task of a team with no owner refuses with `review_no_reviewer`: then run the command again with `--to me`. `me` is the operator, because `ops` runs with the sign-in of the operator. The request loops the reviewer into the task (unless the reviewer is the owner), so the reviewer hears every comment on it. The reviewer approves the work there (this closes the task), or asks for changes. Ask before the close: a close cancels the open requests (`task_closed`), and a done task refuses a request (`review_task_done`). Do not ask for a review of the task group: a request takes one task.
+- Report the review requests that Stage 3 recorded: one for each finished task. Do not ask again. A task that is not finished has no request: report it with its blocker. Do not ask for a review of the task group: a request takes one task.
 - The task group stays open while one of its tasks is open. Do not delete it.
 - Converse to refine. When the person confirms the summary, close the invocation with `--outcome done`.
 
 > [!headless]
-> - Ask for the review of each open task: `ops task review request <ref> --note "<the summary of this task, its commits, and what to check>" --json`, one request for each task. The owner of each task gets it in Your Reviews. When a request refuses with `review_no_reviewer` (a task of a team with no owner), run it again with `--to me`: `me` is the operator. Do not guess another reviewer. Keep `itemId` and `reviewerUserId` of each output for the result. When a request fails for another reason, put the error code and the review command of that task in the result.
+> - Do not ask for a review here: Stage 3 asked for each finished task. Put the reviewer and the `itemId` of each finished task, and the blocker of each other task, in the result.
 > - Set `flint orbh session set phase complete`.
 > - Close the invocation with `--outcome done`.
 > - When the close of the invocation prints `back in:`, a parent frame is open. Do not return: keep the result for the parent frame, and continue it.
-> - Else return: `flint orbh session return --finish "Did task group <address> <title>: <n> tasks. <one line for each task: address, status, commits, review requested of <reviewer> (<itemId>) or the error code>. Next: <the review_task command of each open task>."`
+> - Else return: `flint orbh session return --finish "Did task group <address> <title>: <n> tasks. <one line for each task: address, status, commits, and the review request (<reviewer>, <itemId>) or the error code, or the blocker>. Next: <the review_task command of each open task>."`
 
 # Output
 
 - A task group whose tasks are objects of the session, with each task done alone: its commits, its result, and its close
-- An open review request in Ops for each open task, and the review command of each open task
+- One review request in Ops for each finished task (its `itemId`), the blocker of each task that is not finished, and the review command of each open task

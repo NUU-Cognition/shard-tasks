@@ -18,7 +18,7 @@ This file is the model of the task primitive v0.1 (Notepad 237, Task 1287, secti
 | status | The Ops `checkbox`: `todo`, `doing`, or `done`. Every task has one. |
 | result | The text of what the work gave. It names the commits and the session of the work. |
 | looped in | The people who follow a task beside its owner. Each one hears every comment on the task. |
-| subtask | A Strike target mounted on an Ops task. Ops does not show subtasks. |
+| subtask | In the work of this shard: a step of the work, a Strike target mounted on an Ops task. Ops also has subtasks of its own (an Ops task with a parent task, one level only: a subtask has no subtasks, and a deeper placement is refused with `subtask_too_deep`). Ops shows them: `ops task subtask list\|children <task>`. |
 | task group | A set of tasks that are done together, usually in one session. Each task stays a full task. |
 | lineage | The links `split-from`, `merged-into`, `continues-from`, and `after` (chain). |
 | home | The one place of a task: a section (of a deliverable, a project, a deployment, or the org), or none. The backlog of a project is its section with the role `backlog`; the master backlog is the backlog section of the org. A subtask has the home of its root task. 0 or 1. The service word of a section is `subsection` (ops-command-1021). |
@@ -246,7 +246,8 @@ The skill [[dev-sk-task-place_task]] applies the rule.
 
 ## Subtasks
 
-- A subtask is a part of a task. It lives only in Strike: a Strike target mounted on the Ops task. Ops does not show subtasks.
+- **A step of the work is a subtask in Strike**: a Strike target mounted on the Ops task. The workflows of this shard make these.
+- **Ops has subtasks too**: an Ops task with a parent task (`ops task create --parent <task>`, `ops task subtask add <parent> <title>`). Ops has one level: a subtask has no subtasks, and a task with subtasks cannot become a subtask (`subtask_too_deep`, Ops Task 409). Ops shows them (`ops task subtask list <task>`, `ops task subtask children <task>`), and a subtask has the home of its parent. Make an Ops subtask only when the person asks for one.
 - The rule for new work: when the work serves the intent of a task object of the session, make a subtask in Strike. When it does not, make a new task (or add another task as an object).
 
 ## Addresses

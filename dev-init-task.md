@@ -27,7 +27,7 @@ Read [[dev-knw-task-commits]] too before you commit the work of a task.
 | status | The Ops `checkbox`: `todo`, `doing`, or `done`. Every task has one. `blocked` is a flag. |
 | result | The text of what the work gave. It names the commits and the session of the work. A task has no outcome: a done task is done, and the result says what it gave. |
 | looped in | The people who follow a task beside its owner. Each one hears every comment on the task. A review request loops in the reviewer. |
-| subtask | A Strike target mounted on an Ops task. Ops does not show subtasks. |
+| subtask | In the work of this shard: a step of the work, a Strike target mounted on an Ops task. Ops also has subtasks of its own (an Ops task with a parent task, one level only: a subtask has no subtasks, and a deeper placement is refused with `subtask_too_deep`). Ops shows them: `ops task subtask list\|children <task>`. |
 | task group | A set of tasks that are done together, usually in one session. Each task stays a full task. |
 | lineage | The links `split-from`, `merged-into`, `continues-from`, and `after` (chain). |
 | home | The one place of a task: a section (of a deliverable, a project, a deployment, or the org), or none. The backlog of a project is its section with the role `backlog`; the master backlog is the backlog section of the org. A subtask has the home of its root task. 0 or 1. The service word of a section is `subsection` (ops-command-1021). |
@@ -78,7 +78,7 @@ flint orbh objects add <task address> --subscribe
 
 - When new work serves the intent of a task object of the session, it is a **subtask** of that task: a Strike target mounted on the Ops task. It is not a new task.
 - When the work does not serve that intent, it is a **new task**. Create it, or add the task that fits as an object.
-- Ops does not show subtasks. Strike shows the subtasks and the steps of a task.
+- Strike shows these subtasks and the steps of a task. Ops has subtasks of its own: an Ops task with a parent task, one level only (`subtask_too_deep` for a deeper placement), shown by `ops task subtask list|children <task>`. Make an Ops subtask only when the person asks for one.
 
 ## Placement
 
@@ -112,7 +112,7 @@ todo → doing → done
 - A close sets `done`. `ops task close` closes a task at any time. A task has no outcome (removed 2026-11-04): a done task is done. Do not pass `--outcome`: the CLI refuses it.
 - A task has no type and no stage. The status is the state of the work. Progress goes into the result (`ops task result <ref> "<text>"`): what the work gave, the commits, and the review. When the work stops with no successor, say so in the result.
 - A reopen sets `doing` and keeps the result.
-- **Send each task to review before the close.** The work workflows (`do_task`, `create_and_do_task`, `do_task_group`) end with `ops task review request <ref> --note "<the summary, the commits, and what to check>"`, one request for each task. With no `--to`, the reviewer is the owner of the task. A task of a team with no owner refuses with `review_no_reviewer`: then give `--to me` (the operator). A close cancels the open requests, so ask before the close.
+- **Each finished task gets exactly one review request in Ops**, after its result and before any close, in each work workflow (`do_task`, `create_and_do_task`, `do_task_group`), interactive and headless: `ops task review request <ref> --note "<the summary, the commits, and what to check>" --json`. Do not wait for a person to ask for it. Record its `itemId`. With no `--to`, the reviewer is the owner of the task. A task of a team with no owner refuses with `review_no_reviewer`: then give `--to me` (the operator). A blocked or unfinished task gets no request: report it with its blocker. A close cancels the open requests (`task_closed`), and a done task refuses a request (`review_task_done`).
 - After each change of the Ops state (a start, a close, a reopen), run `flint shard task task-sync <ref>`, so that the note shows the state.
 
 [[dev-sk-task-close_task]] gives the steps.
@@ -188,10 +188,10 @@ A headless or subagent Orbh session has no person at the terminal. It loads this
 |---|---|
 | [[dev-wkfl-task-create_task]] | Make a `todo` task, place it with the hint rule, and scope it |
 | [[dev-wkfl-task-scope_task]] | Research first, then write the scope and the definition of done into the task note |
-| [[dev-wkfl-task-do_task]] | Add the task as an object, work, make the WIP commits, write the result with the commits, give a summary, ask for the review in Ops, then review |
-| [[dev-wkfl-task-create_and_do_task]] | Create a task, add it as an object, do it in one run, and ask for the review in Ops |
+| [[dev-wkfl-task-do_task]] | Add the task as an object, work, make the WIP commits, write the result with the commits, ask for the review in Ops, give a summary, then review |
+| [[dev-wkfl-task-create_and_do_task]] | Create a task, add it as an object, do it in one run, with the review request in Ops after the result |
 | [[dev-wkfl-task-review_task]] | A second session checks the work against the task note, and writes a pass into the result or the findings into the note |
-| [[dev-wkfl-task-do_task_group]] | Make or take a task group, add each of its tasks as an object, do each task in it, and ask for the review of each open task in Ops |
+| [[dev-wkfl-task-do_task_group]] | Make or take a task group, add each of its tasks as an object, do each task in it, and ask for the review of each finished task in Ops after its result |
 
 ## Skills
 

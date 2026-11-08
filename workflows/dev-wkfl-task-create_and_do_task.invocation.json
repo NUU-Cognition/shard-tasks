@@ -46,7 +46,7 @@
       "by": "agent",
       "evidence": "required",
       "stage": "Stage 3: Result",
-      "next": "Write the result with ops task result {{task}} '<what the work gave>. Tests: <…>. Commits: <sha> (<repo>), …. Session: <ORBH_SESSION_ID>'. Then run flint shard task task-sync {{task}}."
+      "next": "Write the result with ops task result {{task}} '<what the work gave>. Tests: <…>. Commits: <sha> (<repo>), …. Session: <ORBH_SESSION_ID>'. Then run flint shard task task-sync {{task}}. When the work is finished, ask for the review in Ops now, with no wait for a person: ops task review request {{task}} --note '<the summary, the commits, and what to check>' --json. On review_no_reviewer (a task of a team with no owner), run it again with --to me (the operator). Put the itemId and the reviewer in the evidence of this step. A blocked or unfinished task gets no request: put the blocker in the evidence."
     },
     {
       "id": "review",
@@ -55,8 +55,8 @@
       "evidence": "required",
       "stage": "Stage 4: Review Handoff",
       "next": {
-        "interactive": "Give the person the summary of {{task}}. When the person wants a review, ask for it in Ops before the close: ops task review request {{task}} --note '<the summary, the commits, and what to check>'. On review_no_reviewer (a task of a team with no owner), run it again with --to me (the operator). The review comes next in a second session: flint shard invoke task review_task --input task={{task}}. Toward the review now: skip the step close, and close the invocation with --outcome done.",
-        "headless": "Ask for the review in Ops: ops task review request {{task}} --note '<the summary, the commits, and what to check>' --json. On review_no_reviewer (a task of a team with no owner), run it again with --to me (the operator); do not guess another reviewer. Put the itemId and the reviewer in the evidence of this step and in the result, or the error code and the review command. Set the phase complete. Mark this step done, and close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the review_task command of the close in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+        "interactive": "Give the person the summary of {{task}}, with the reviewer and the itemId of the review request of the step result (or the blocker). Do not ask for the review again. After a change of the result, run the same review request again (the same reviewer: again true, no second request). The review comes next in a second session: flint shard invoke task review_task --input task={{task}}. Toward the review now: skip the step close, and close the invocation with --outcome done.",
+        "headless": "Do not ask for the review again: the step result recorded the request. Put the itemId and the reviewer in the result, or the error code and the review command, or the blocker. Set the phase complete. Mark this step done, and close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the review_task command of the close in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
       }
     },
     {
@@ -66,7 +66,7 @@
       "evidence": "required",
       "stage": "Stage 5: Close",
       "modes": ["interactive"],
-      "next": "When the person confirms, close the task with sk-task-close_task: ops task close {{task}}, then flint shard task task-sync {{task}}. Keep the result: it names the commits. When the person wants the review first, skip this step with a reason, and close the invocation with --outcome done."
+      "next": "Close only a task whose review request is recorded (the step result). When the person confirms, close the task with sk-task-close_task: ops task close {{task}}, then flint shard task task-sync {{task}}. Keep the result: it names the commits. When the person wants the review first, skip this step with a reason, and close the invocation with --outcome done."
     }
   ],
   "behaviours": [
@@ -84,7 +84,7 @@
       "phase": "before",
       "disposition": ["finish"],
       "when": { "task": "set" },
-      "say": "Before the return: write the result of {{task}}, with each commit as <sha> (<repo>) and the session. Then run flint shard task task-sync {{task}}. Ask for the review in Ops: ops task review request {{task}} --note '<…>' (on review_no_reviewer: --to me). Put the itemId of the request and the review_task command in the result."
+      "say": "Before the return: write the result of {{task}}, with each commit as <sha> (<repo>) and the session. Then run flint shard task task-sync {{task}}. A finished task has exactly one review request in Ops, after its result and before any close (ops task review request {{task}} --note '<…>' --json; on review_no_reviewer: --to me). Put its itemId and the review_task command in the result. A blocked or unfinished task has no request: put the blocker in the result."
     }
   ]
 }

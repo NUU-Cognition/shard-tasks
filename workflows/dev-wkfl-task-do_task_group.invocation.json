@@ -33,8 +33,8 @@
       "evidence": "required",
       "stage": "Stage 3: Each Task",
       "next": {
-        "interactive": "Do the tasks of {{task}} one at a time. Write the result of each task with its own commits and the session, run flint shard task task-sync on it, and close each task alone when the person confirms.",
-        "headless": "Set the phase implementing. Do the tasks of {{task}} one at a time, and keep the progress current. Write the result of each task with its own commits and the session, and run flint shard task task-sync on it."
+        "interactive": "Do the tasks of {{task}} one at a time. For each task: write its result with its own commits and the session, and run flint shard task task-sync on it. Then, when its work is finished, ask for its review in Ops at once, with no wait for a person: ops task review request <task> --note '<the summary of this task, its commits, and what to check>' --json (on review_no_reviewer: again with --to me, the operator). Record its itemId. A blocked or unfinished task gets no request: record its blocker. Close each task alone, only after its request is recorded, when the person confirms.",
+        "headless": "Set the phase implementing. Do the tasks of {{task}} one at a time, and keep the progress current. For each task: write its result with its own commits and the session, and run flint shard task task-sync on it. Then, when its work is finished, ask for its review in Ops at once: ops task review request <task> --note '<the summary of this task, its commits, and what to check>' --json (on review_no_reviewer: again with --to me, the operator). Record its itemId. A blocked or unfinished task gets no request: record its blocker, and go on to the next task."
       }
     },
     {
@@ -44,8 +44,8 @@
       "evidence": "required",
       "stage": "Stage 4: Summary and Review Handoff",
       "next": {
-        "interactive": "Give the person a summary of each task, and the review_task command of each open task. When the person wants the reviews, ask for them in Ops before any close, one request for each open task: ops task review request <task> --note '<the summary of this task, its commits, and what to check>'. On review_no_reviewer (a task of a team with no owner), run it again with --to me (the operator). Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
-        "headless": "Ask for the review of each open task in Ops, one request for each task: ops task review request <task> --note '<the summary of this task, its commits, and what to check>' --json. On review_no_reviewer (a task of a team with no owner), run it again with --to me (the operator); do not guess another reviewer. Put each itemId and reviewer in the evidence of this step and in the result, or the error code and the review command of that task. Set the phase complete. Close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the summary of each task and each review_task command in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+        "interactive": "Give the person a summary of each task: its review request (the reviewer and the itemId of the step work) or its blocker, and the review_task command of each open task. Do not ask for a review again. Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
+        "headless": "Do not ask for a review again: the step work asked for each finished task. Put each itemId and reviewer in the evidence of this step and in the result, and the blocker of each task that is not finished. Set the phase complete. Close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the summary of each task and each review_task command in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
       }
     }
   ],
@@ -70,7 +70,7 @@
       "phase": "before",
       "disposition": ["finish"],
       "when": { "task": "set" },
-      "say": "Before the return: each open task of {{task}} has its result, with its own commits, and an open review request in Ops (ops task review request <task> --note '<…>'; on review_no_reviewer: --to me). Put each itemId and each review_task command in the result."
+      "say": "Before the return: each finished task of {{task}} has its result, with its own commits, and exactly one review request in Ops, asked after its result and before any close (ops task review request <task> --note '<…>' --json; on review_no_reviewer: --to me). Each blocked or unfinished task has no request and has its blocker. Put each itemId, each blocker, and each review_task command in the result."
     }
   ]
 }
