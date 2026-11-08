@@ -1,3 +1,13 @@
+# 0.5.0
+
+- **Send to review at the end of the work** (fleet ops-overnight-1109). `wkfl-task-create_and_do_task` (Stage 4) and `wkfl-task-do_task_group` (Stage 4, one request for each open task) ask for the review in Ops before the close, in the same words as `wkfl-task-do_task`: `ops task review request <ref> --note "<the summary, the commits, and what to check>"`. The headless callouts ask with `--json` and keep `itemId` and `reviewerUserId` for the result.
+- **The reviewer.** With no `--to`, the reviewer is the owner of the task. A task of a team with no owner refuses with `review_no_reviewer`: the three workflows then run the request again with `--to me`. `me` is the operator, because `ops` runs with the sign-in of the operator. The workflows do not guess another reviewer. Before, `do_task` put only the review command in the result.
+- **The result line.** The headless return of each work workflow names the request: `Review: requested of <reviewer> (<itemId>)`, or the error code and the review command.
+- **Invocations.** The review request is part of the step `review` (`do_task`, `create_and_do_task`) and of the step `summary` (`do_task_group`). The step lists do not change, so an open invocation of before still closes. The `return-check` behaviours say the request, and `do_task_group` has a new behaviour `review-check`.
+- **The data mode of the dev launcher** (Ops Task 415). `knw-task-cli` § Work on Dev: a dev build of `ops` uses PROD data by default. For dev data, set `OPS_DATA_MODE=dev`. The order is `OPS_DATA_MODE`, a test run, `NUU_DATA_MODE`, `~/.nuucognition/dev-data.json`, then prod.
+- The init says the review rule under the close rules. `knw-task-cli` gives the `--to` forms and the JSON output of `ops task review request`.
+- No use of a removed command is left: `ops task stage|retype|commit|field|type`, `--outcome` on `ops task close`, and the stages of `task.dev`. An old address `task.dev/<id>` still resolves, and the text says so.
+
 # 0.4.1
 
 - NUU Ops removed the task outcome (operator page feedback, 2026-11-04): a done task is done, with its result. No `completed`, `dropped`, or `superseded`. `ops task close` takes only `--result`, and `--outcome` is an unknown option. Split, merge, and continue close the open old task. The init, `knw-task-model`, `knw-task-cli`, `sk-task-close_task`, `sk-task-split_task`, `sk-task-merge_tasks`, `sk-task-continue_task`, `sk-task-capture_as_task`, and `wkfl-task-do_task_group` lose the outcome. The map of the Projects statuses `deprecated` and `superseded` goes to `done` with a result (and a lineage link for `superseded`).

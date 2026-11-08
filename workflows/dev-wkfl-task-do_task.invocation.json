@@ -52,8 +52,8 @@
       "evidence": "required",
       "stage": "Stage 4: Review Handoff",
       "next": {
-        "interactive": "Give the person the summary of {{task}}. The review comes next in a second session: flint shard invoke task review_task --input task={{task}}. Toward the review now: skip the step close, and close the invocation with --outcome done.",
-        "headless": "Set the phase complete. Mark this step done, and close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the review_task command of the close in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+        "interactive": "Give the person the summary of {{task}}. When the person wants a review, ask for it in Ops before the close: ops task review request {{task}} --note '<the summary, the commits, and what to check>'. On review_no_reviewer (a task of a team with no owner), run it again with --to me (the operator). The review comes next in a second session: flint shard invoke task review_task --input task={{task}}. Toward the review now: skip the step close, and close the invocation with --outcome done.",
+        "headless": "Ask for the review in Ops: ops task review request {{task}} --note '<the summary, the commits, and what to check>' --json. On review_no_reviewer (a task of a team with no owner), run it again with --to me (the operator); do not guess another reviewer. Put the itemId and the reviewer in the evidence of this step and in the result, or the error code and the review command. Set the phase complete. Mark this step done, and close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the review_task command of the close in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
       }
     },
     {
@@ -79,7 +79,7 @@
       "phase": "before",
       "disposition": ["finish"],
       "when": { "task": "set" },
-      "say": "Before the return: write the result of {{task}}, with each commit as <sha> (<repo>) and the session. Then run flint shard task task-sync {{task}}. Put the review_task command in the result."
+      "say": "Before the return: write the result of {{task}}, with each commit as <sha> (<repo>) and the session. Then run flint shard task task-sync {{task}}. Ask for the review in Ops: ops task review request {{task}} --note '<…>' (on review_no_reviewer: --to me). Put the itemId of the request and the review_task command in the result."
     }
   ]
 }

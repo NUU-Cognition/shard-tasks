@@ -112,6 +112,7 @@ todo → doing → done
 - A close sets `done`. `ops task close` closes a task at any time. A task has no outcome (removed 2026-11-04): a done task is done. Do not pass `--outcome`: the CLI refuses it.
 - A task has no type and no stage. The status is the state of the work. Progress goes into the result (`ops task result <ref> "<text>"`): what the work gave, the commits, and the review. When the work stops with no successor, say so in the result.
 - A reopen sets `doing` and keeps the result.
+- **Send each task to review before the close.** The work workflows (`do_task`, `create_and_do_task`, `do_task_group`) end with `ops task review request <ref> --note "<the summary, the commits, and what to check>"`, one request for each task. With no `--to`, the reviewer is the owner of the task. A task of a team with no owner refuses with `review_no_reviewer`: then give `--to me` (the operator). A close cancels the open requests, so ask before the close.
 - After each change of the Ops state (a start, a close, a reopen), run `flint shard task task-sync <ref>`, so that the note shows the state.
 
 [[dev-sk-task-close_task]] gives the steps.
@@ -187,10 +188,10 @@ A headless or subagent Orbh session has no person at the terminal. It loads this
 |---|---|
 | [[dev-wkfl-task-create_task]] | Make a `todo` task, place it with the hint rule, and scope it |
 | [[dev-wkfl-task-scope_task]] | Research first, then write the scope and the definition of done into the task note |
-| [[dev-wkfl-task-do_task]] | Add the task as an object, work, make the WIP commits, write the result with the commits, give a summary, then review |
-| [[dev-wkfl-task-create_and_do_task]] | Create a task, add it as an object, and do it in one run |
+| [[dev-wkfl-task-do_task]] | Add the task as an object, work, make the WIP commits, write the result with the commits, give a summary, ask for the review in Ops, then review |
+| [[dev-wkfl-task-create_and_do_task]] | Create a task, add it as an object, do it in one run, and ask for the review in Ops |
 | [[dev-wkfl-task-review_task]] | A second session checks the work against the task note, and writes a pass into the result or the findings into the note |
-| [[dev-wkfl-task-do_task_group]] | Make or take a task group, add each of its tasks as an object, and do each task in it |
+| [[dev-wkfl-task-do_task_group]] | Make or take a task group, add each of its tasks as an object, do each task in it, and ask for the review of each open task in Ops |
 
 ## Skills
 

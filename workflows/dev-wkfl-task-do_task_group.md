@@ -1,5 +1,5 @@
 ---
-description: "Make or take a task group, add each of its tasks to the session as an object, and do each task in it; each task is recorded and closed alone"
+description: "Make or take a task group, add each of its tasks to the session as an object, and do each task in it; each task is recorded, sent to review in Ops, and closed alone"
 ---
 
 > [!important] THIS FILE IS AN INSTRUCTION. WHEN REFERENCED IT IS MEANT TO BE TAKEN AS AN ACTION.
@@ -75,16 +75,18 @@ Once each task has its result, or is closed or removed, progress to the next sta
 
 - Give the person a summary for each task: the address, what changed, the commits, the status, and the close or the next step.
 - Each task that is still open needs a review in a second session: `flint shard invoke task review_task --input task=<address>`, one for each task. Give the commands.
+- **Ask for the review in Ops, one request for each task.** For each task that is still open with its result, run `ops task review request <ref> --note "<the summary of this task, its commits, and what to check>"`. Name only the commits of that task in its note. The request goes to the owner of the task, into **Your Reviews** of the web app, with a notification. Give `--to <member>` when the person names another reviewer. A task of a team with no owner refuses with `review_no_reviewer`: then run the command again with `--to me`. `me` is the operator, because `ops` runs with the sign-in of the operator. The request loops the reviewer into the task (unless the reviewer is the owner), so the reviewer hears every comment on it. The reviewer approves the work there (this closes the task), or asks for changes. Ask before the close: a close cancels the open requests (`task_closed`), and a done task refuses a request (`review_task_done`). Do not ask for a review of the task group: a request takes one task.
 - The task group stays open while one of its tasks is open. Do not delete it.
 - Converse to refine. When the person confirms the summary, close the invocation with `--outcome done`.
 
 > [!headless]
+> - Ask for the review of each open task: `ops task review request <ref> --note "<the summary of this task, its commits, and what to check>" --json`, one request for each task. The owner of each task gets it in Your Reviews. When a request refuses with `review_no_reviewer` (a task of a team with no owner), run it again with `--to me`: `me` is the operator. Do not guess another reviewer. Keep `itemId` and `reviewerUserId` of each output for the result. When a request fails for another reason, put the error code and the review command of that task in the result.
 > - Set `flint orbh session set phase complete`.
 > - Close the invocation with `--outcome done`.
 > - When the close of the invocation prints `back in:`, a parent frame is open. Do not return: keep the result for the parent frame, and continue it.
-> - Else return: `flint orbh session return --finish "Did task group <address> <title>: <n> tasks. <one line for each task: address, status, commits>. Next: <the review_task command of each open task>."`
+> - Else return: `flint orbh session return --finish "Did task group <address> <title>: <n> tasks. <one line for each task: address, status, commits, review requested of <reviewer> (<itemId>) or the error code>. Next: <the review_task command of each open task>."`
 
 # Output
 
 - A task group whose tasks are objects of the session, with each task done alone: its commits, its result, and its close
-- The review command of each open task
+- An open review request in Ops for each open task, and the review command of each open task

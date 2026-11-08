@@ -16,9 +16,9 @@ This file lists each command of the task primitive v0.1: the verbs `ops task …
 
 Use the dev deployment only for work on Ops itself, for example a test of a new verb or a fix before its deploy. A task of dev does not exist on production: do not mix the two in one session.
 
-- The dev launcher is the file `apps/cli-ops/bin/ops.js` of the repository `main` (`ops-dev` inside the monorepo). It runs the dev build (`dist-dev/`), or the TypeScript source when there is no build or when `OPS_CLI_FORCE_SOURCE=1`. Its data mode is dev (the web app `http://localhost:3088`), unless `ops mode prod` or `OPS_DATA_MODE=prod` says otherwise.
-- Run each `ops` command of the session with the dev launcher, and set `NUU_OPS_CLI` to it, so that the note scripts use dev too. A value that names a file runs that file: `NUU_OPS_CLI="<repo main>/apps/cli-ops/bin/ops.js"`. Another value runs in `/bin/sh` with the arguments after it: `NUU_OPS_CLI="node <repo main>/apps/cli-ops/bin/ops.js"`.
-- Unset `NUU_OPS_CLI` again when the work on dev ends.
+- The dev launcher is the file `apps/cli-ops/bin/ops.js` of the repository `main` (`ops-dev` inside the monorepo). It runs the dev build (`dist-dev/`), or the TypeScript source when there is no build or when `OPS_CLI_FORCE_SOURCE=1`. **A dev build uses PROD data by default** (Ops Task 415), with the sign-in of `nuu login`: each write is real, and the CLI prints one stderr note. For dev data (the web app `http://localhost:3088`), set `OPS_DATA_MODE=dev`. The data mode of a dev build comes from the first of: `OPS_DATA_MODE`, a test run (dev data), `NUU_DATA_MODE`, the file `~/.nuucognition/dev-data.json` (`ops mode` and `flint env use` write it), then prod. A prod build always uses prod data. `ops whoami` shows the data mode and its source.
+- Run each `ops` command of the session with the dev launcher and `OPS_DATA_MODE=dev`, and set `NUU_OPS_CLI` to it, so that the note scripts use dev too. A value that names a file runs that file: `NUU_OPS_CLI="<repo main>/apps/cli-ops/bin/ops.js"`. Another value runs in `/bin/sh` with the arguments after it: `NUU_OPS_CLI="node <repo main>/apps/cli-ops/bin/ops.js"`.
+- Unset `NUU_OPS_CLI` and `OPS_DATA_MODE` again when the work on dev ends.
 
 ## Refs and Global Flags
 
@@ -59,7 +59,7 @@ A review request puts a task in the review queue of a person: **Your Reviews** i
 
 | Command | What it does |
 |---|---|
-| `ops task review request <ref> [--to <member>] [--note "<text>"]` | Ask for a review. With no `--to`, the reviewer is the owner of the task. A second request to the same reviewer changes the note of the open request. The request loops the reviewer into the task. `--note -` reads stdin. |
+| `ops task review request <ref> [--to <me\|email\|handle\|name\|user id>] [--note "<text>"]` | Ask for a review. With no `--to`, the reviewer is the owner of the task. A task of a team with no owner refuses with `review_no_reviewer`: the workflows of this shard then give `--to me` (the operator, whose sign-in `ops` uses). The output (`--json`) is `{itemId, id, orgSlug, reviewerUserId, again}`. A second request to the same reviewer changes the note of the open request. The request loops the reviewer into the task. `--note -` reads stdin. |
 | `ops task review approve <ref> [--note "<text>"] [--keep-open]` | The reviewer approves. This closes the task, unless `--keep-open`. |
 | `ops task review changes <ref> [--note "<text>"]` | The reviewer asks for changes. The task stays open, and a done task opens again. The note goes to the requester. |
 | `ops task review dismiss <ref> [--note "<text>"]` | The reviewer dismisses the request. Nothing else changes. |

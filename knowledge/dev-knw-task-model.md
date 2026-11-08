@@ -275,7 +275,7 @@ The skill [[dev-sk-task-place_task]] applies the rule.
 | `task_relation_invalid` | A relation that breaks a rule, for example a bad kind or ref, or more than 100 relations |
 | `task_attachment_invalid` | An attachment that breaks a rule, for example both or neither of a task and a task group, or more than 100 live attachments |
 | `task_unplaced_with_home` | A write gives a home and `unplaced` together |
-| `review_no_reviewer` | A review request of a task of a team with no owner: give `--to <member>` |
+| `review_no_reviewer` | A review request of a task of a team with no owner: give `--to <member>`, or `--to me` (the operator) |
 | `review_task_done` | A review request of a done task: reopen it first |
 | `review_not_reviewer` | A verdict by a person who is not the reviewer |
 | `review_not_requester` | A cancel by a person who did not ask for the review |

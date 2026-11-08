@@ -44,8 +44,8 @@
       "evidence": "required",
       "stage": "Stage 4: Summary and Review Handoff",
       "next": {
-        "interactive": "Give the person a summary of each task, and the review_task command of each open task. Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
-        "headless": "Set the phase complete. Close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the summary of each task and each review_task command in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
+        "interactive": "Give the person a summary of each task, and the review_task command of each open task. When the person wants the reviews, ask for them in Ops before any close, one request for each open task: ops task review request <task> --note '<the summary of this task, its commits, and what to check>'. On review_no_reviewer (a task of a team with no owner), run it again with --to me (the operator). Then close the invocation: flint shard invocations close {{invocation}} --outcome done.",
+        "headless": "Ask for the review of each open task in Ops, one request for each task: ops task review request <task> --note '<the summary of this task, its commits, and what to check>' --json. On review_no_reviewer (a task of a team with no owner), run it again with --to me (the operator); do not guess another reviewer. Put each itemId and reviewer in the evidence of this step and in the result, or the error code and the review command of that task. Set the phase complete. Close the invocation: flint shard invocations close {{invocation}} --outcome done. Put the summary of each task and each review_task command in the result. When no parent frame is open, return with flint orbh session return --finish. When the close prints back in: (a parent frame is open), do not return: continue the parent frame."
       }
     }
   ],
@@ -63,6 +63,14 @@
       "disposition": ["finish"],
       "when": { "task": "empty" },
       "say": "The input task is empty: no task group is recorded. Set it with flint shard invocations set-input {{invocation}} task=<address>, or close the invocation with --outcome abandoned."
+    },
+    {
+      "id": "review-check",
+      "on": "session.return",
+      "phase": "before",
+      "disposition": ["finish"],
+      "when": { "task": "set" },
+      "say": "Before the return: each open task of {{task}} has its result, with its own commits, and an open review request in Ops (ops task review request <task> --note '<…>'; on review_no_reviewer: --to me). Put each itemId and each review_task command in the result."
     }
   ]
 }
