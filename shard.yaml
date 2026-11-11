@@ -3,10 +3,10 @@ shard: "@nuucognition/tasks"
 id: 4686b8d6-54b2-4659-9682-171903339185
 source:
   id: b2a094b2-bc4f-43b2-a256-a4ed5d30d110
-version: "0.5.0"
+version: "0.6.0"
 name: Tasks
 shorthand: task
-description: "Tasks in NUU Ops, each with a Flint task note: one task entity with a status and a result, review requests, the people looped in, task groups, lineage, placement, WIP commits, and the task as an object of a session"
+description: "Tasks in NUU Ops, each with a Flint task note: one task entity with a status and a result, review requests, the people looped in, task groups, lineage, placement, WIP commits, the task as an object of a session, and the duty of an agent session at a task (a comment or the chat, a person first)"
 dependencies:
   "@nuucognition/flint": ""
   "@nuucognition/projects": "^1.6"

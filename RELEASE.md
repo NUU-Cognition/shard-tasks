@@ -1,3 +1,13 @@
+# 0.6.0
+
+- **The duty of an agent session at a task** (Task 448 of the NUU Operations Flint, D17 and W19 of the contract of the fleet total-orchestration-1111). A person can start an agent session at a task in Ops, or attach a session to a task. The session works on the task for that person: it keeps the task in its objects, it answers a person first, it reads each change when `orbh:objects` says that the task changed, it does the changes of a review and requests the review again, and it posts progress as short comments. The init (§ The Duty of an Agent Session at a Task), `sk-task-use_task` (steps 5 to 7), and `knw-task-model` (§ An Agent Session at a Task) give it.
+- **Two equal ways to speak to an agent.** A person writes a comment on the task (the updates of the task) or a message in the chat of the session (Orbh Chat). The session answers in the place where the person wrote: `ops comment add <task> "<text>"` for a comment, `flint orbh chat send "<text>"` for a chat message. The Page shows the unread chat first, in the block `CHAT`. A person message has priority over the other work.
+- **Events, not checks.** A change of the task reaches the session as a push of `orbh:objects`. The session gets no message for its own write.
+- **The agent defaults.** `knw-task-model` gives the order of the read (the Flint task note of the task, then the deliverable, then the project) and the verbs `ops agents`, `ops agents defaults <task>`, and `ops agents defaults set`.
+- **Headless.** A session answers each person message before it returns. A session that a person started or attached from Ops can return with `--await`, so that a new comment or a chat message wakes it.
+- The terms "agent session", "comment", "the chat", and "agent defaults" are new in the init and in `knw-task-model`.
+- `knw-task-cli` says that the production `ops` has no data mode (Task jn7emraj of the NUU Operations Flint, commit 5fbd3e9 of another session).
+
 # 0.5.0
 
 - **Each finished task gets exactly one review request in Ops** (the rule of the operator, fleet ops-overnight-1109). In `wkfl-task-do_task`, `wkfl-task-create_and_do_task`, and `wkfl-task-do_task_group`, interactive and headless, the agent asks for the review right after the result and the sync of each finished task, and before any close: `ops task review request <ref> --note "<the summary, the commits, and what to check>" --json`. The agent does not wait for a person to ask for it. It records the `itemId` and the reviewer in the `# Task Log` and in the result. A blocked or unfinished task gets no request: the agent reports it with its blocker. A close comes only after the request.

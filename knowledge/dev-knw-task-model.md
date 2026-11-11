@@ -1,5 +1,5 @@
 ---
-description: "The task model of NUU Ops and the Tasks shard: the two parts of a task (the task note and the Ops task), the terms, the fields, the status and the result, the close rules, the review requests, the people looped in, lineage, task groups, placement, attachments, and addresses"
+description: "The task model of NUU Ops and the Tasks shard: the two parts of a task (the task note and the Ops task), the terms, the fields, the status and the result, the close rules, the review requests, the people looped in, an agent session at a task (its duty, the comments and the chat, the agent defaults), lineage, task groups, placement, attachments, and addresses"
 ---
 
 # Knowledge: The Task Model
@@ -26,6 +26,10 @@ This file is the model of the task primitive v0.1 (Notepad 237, Task 1287, secti
 | unplaced | A task with no home. A normal state. |
 | attachment | A link from a task or a task group to a session, a fleet, a note, or a repository. |
 | task object | An Ops task in the context of an Orbh session: an item of the Objects Protocol (`flint orbh objects add <address> --subscribe`). The Page shows it in the `OBJECTS` block. |
+| agent session | An Orbh session that works on a task for a person. It keeps the task as a task object. |
+| comment | A text in the updates of a task. Only a task carries comments. |
+| the chat | Orbh Chat: the one conversation of an agent session with the people who can run the session. |
+| agent defaults | The Flint, the computer, the site, the profile, and the mode that a new agent session at the task gets. |
 
 Always write "task group", not "group" alone. Orbh has job groups (`--until-group`), and Invironments has `#ie/groups/`.
 
@@ -173,6 +177,31 @@ The people looped into a task follow it beside its owner (Ops Task 402, amendmen
 - A mention of a member in a comment loops in that member.
 - A person loops in a member with the field "Looped in" of the task dialog, or with `ops task loop add <ref> <person>`. The person gets a notification. `ops task loop remove <ref> <person>` takes a person out.
 - `ops task show` names the people looped in.
+
+## An Agent Session at a Task
+
+A session is **at** a task when it keeps the task as an item (`flint orbh objects add <address> --subscribe`). A person starts an agent session at a task in Ops, or attaches a session that runs. The **current object** of a session is its newest Ops item (`addedAt`). A session can be at more than one object. The page Agents of Ops and `ops agents` list the sessions at Ops objects now. A person sees a session, its timeline, and its chat only with `view` on its computer.
+
+**The duty.** The session works on the task for the person who attached it:
+
+1. It keeps the task in its objects.
+2. It answers a person first, in the place where the person wrote.
+3. When `orbh:objects` says that the task changed, it reads the new updates.
+4. When a review asks for changes, it does them, writes the result again, and requests the review again.
+5. It posts progress as short comments.
+
+**Two equal ways to speak.** A person speaks to the agent session with a comment on the task or with a message in the chat. Both are valid. A person message has priority over the other work: the session answers it before it continues.
+
+| Way | Where it is | The session reads | The session answers |
+|---|---|---|---|
+| Comment | The updates of the task, in Ops | `ops comment list <task>`, after a message of `orbh:objects` | `ops comment add <task> "<text>"` |
+| The chat | The chat of the session (Orbh Chat): one conversation for each session, between the people who can `run` it and the session | The block `CHAT` of the Page (the unread chat, first), or `flint orbh chat read` | `flint orbh chat send "<text>"` |
+
+- A change of the task reaches the session as an event (a push), not as a timed check. The session gets no message for its own write.
+- A comment notifies the owner, the creator, and the people looped in. A chat message reaches the people who can run the session.
+- The chat has the verbs `flint orbh chat send "<text>"`, `flint orbh chat read`, and `flint orbh chat on|off`.
+
+**The agent defaults.** The launcher of an agent session derives its defaults. The order: the object (the task), then its section, its deliverable, its project, and its org, then the last choice of the person. A project and a deliverable hold the agent defaults: the Flint (their Flint place), the computer, the site, the profile (`runtime/profile`), and the mode (`headless`, `interactive`, or `obsidian`). Each field comes from the nearest level that has one: the Flint task note of the task, then the deliverable, then the project. `ops agents defaults <task>` shows each value with its source. `ops agents defaults set <project or deliverable> …` sets them.
 
 ## Lineage
 

@@ -12,7 +12,7 @@ The Tasks shard gives agents one way to work with the tasks of NUU Operations (O
 
 | File | Why |
 |---|---|
-| [[dev-knw-task-model]] | The model: the terms, the fields, the status, the result, the close rules, the review requests, the people looped in, lineage, task groups, and placement |
+| [[dev-knw-task-model]] | The model: the terms, the fields, the status, the result, the close rules, the review requests, the people looped in, an agent session at a task (the duty, the comments and the chat, the agent defaults), lineage, task groups, and placement |
 | [[dev-knw-task-cli]] | Each command of `ops task`, the scripts `task-new`, `task-link`, and `task-sync`, and the verbs of `flint orbh objects` for a task |
 
 Read [[dev-knw-task-commits]] too before you commit the work of a task.
@@ -35,6 +35,9 @@ Read [[dev-knw-task-commits]] too before you commit the work of a task.
 | unplaced | A task with no home. A normal state. |
 | attachment | A link from a task or a task group to a session, a fleet, a note, or a repository. |
 | task object | An Ops task in the context of an Orbh session: an item of the Objects Protocol (`flint orbh objects add <address> --subscribe`). The Page shows it in the `OBJECTS` block. |
+| agent session | An Orbh session that works on a task for a person. A person starts it at the task in Ops, or attaches a session to the task. The session keeps the task as a task object. |
+| comment | A text in the updates of a task: `ops comment add <task> "<text>"`. Only a task carries comments. |
+| the chat | The one conversation of an agent session with the people who can run it (Orbh Chat): `flint orbh chat send "<text>"` and `flint orbh chat read`. |
 
 The full model is in [[dev-knw-task-model]], and each command is in [[dev-knw-task-cli]].
 
@@ -73,6 +76,24 @@ flint orbh objects add <task address> --subscribe
 - When you dispatch a subagent for this work, put the address of the task in the prompt. The dispatcher can give the task at the launch: `flint orbh launch … --object <task address>=subscribe`.
 
 [[dev-sk-task-use_task]] gives the steps. The rules of a use of an object are in the skill `sk-foh-use_object` of the Orbh shard.
+
+## The Duty of an Agent Session at a Task
+
+A person can start an agent session at a task in Ops, or attach a session to a task. The session then works on the task for that person. These rules apply to each session that has a task as an object:
+
+1. **Keep the task in the objects.** Do not remove the item while the work goes on.
+2. **Answer a person first.** A person message has priority over the other work. Read it and answer it before you continue. A person speaks to the agent session in two equal ways. Answer in the place where the person wrote:
+
+| The person writes | The session sees it | The session answers |
+|---|---|---|
+| A comment on the task | A message of `orbh:objects` says that the task changed. Read it with `ops comment list <task>`. | A comment: `ops comment add <task> "<text>"` |
+| A message in the chat | The Page shows the unread chat first, in the block `CHAT`. Read it with `flint orbh chat read`. | A chat message: `flint orbh chat send "<text>"` |
+
+3. **Read each change.** A change of the task reaches the session as an event (a push), not as a timed check. The session gets no message for its own write. When `orbh:objects` says that the task changed, read the new updates (`ops comment list <task>`) before you continue.
+4. **Do the changes of a review.** When the reviewer asks for changes, do them. Then write the result again (`ops task result <ref> "<text>"`), and request the review again (`ops task review request <ref> --note "<what changed>" --json`).
+5. **Post progress as short comments** on the task: `ops comment add <task> "<one line>"`. A comment notifies the owner, the creator, and the people looped in.
+
+The agent defaults of a task (the Flint, the computer, the site, the profile, and the mode of a new agent session) come from the Flint task note of the task, then its deliverable, then its project: `ops agents defaults <task>`. `ops agents` lists the agent sessions at Ops objects now. A session at a section, a deliverable, or a project follows the same duty: the init of the Operations shard gives it. Only a task carries comments, so at the other three types a person speaks in the chat.
 
 ## Task or Subtask
 
@@ -178,6 +199,7 @@ A headless or subagent Orbh session has no person at the terminal. It loads this
 - Report progress with `flint orbh session set phase <phase>` and `flint orbh session set progress "<done>/<total> checks"`.
 - Phase values: `reading-task`, `creating-task`, `implementing`, `reviewing`, `resolving`, `blocked`, `complete`.
 - End each headless workflow with `flint orbh session return --finish "<result>"` only when no parent frame is open. Put the address of each task that the session made or changed in the result.
+- **A person message comes first, also in a headless session.** Answer each comment and each chat message of a person in its place before you return (§ The Duty of an Agent Session at a Task). A session that a person started or attached from Ops can return with `--await`: a new comment (with `--subscribe`) or a chat message then wakes it.
 - **A child frame does not return.** A workflow of this shard can run as a child frame of another workflow (for example a notepad, or a parent workflow of a headless session). Then the close of its invocation prints `back in: <parent>`, and `flint shard step` shows the parent. Do not return and do not close the session: give the result to the parent frame, and continue it. The session returns when its outermost frame is done.
 
 # What Is Here
