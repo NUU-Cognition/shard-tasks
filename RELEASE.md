@@ -1,3 +1,7 @@
+# 0.6.1
+
+- **Deprecated.** The Operations shard 0.8.0 (`ops`) holds the work of this shard: the six workflows, the nine skills, the three knowledge files (now `knw-ops-task_model`, `knw-ops-task_cli`, and `knw-ops-task_commits`), and the scripts `task-new`, `task-link`, and `task-sync` (fleet storage-1112, the operator request of 2026-11-12). The init starts with a deprecation callout that gives the new names, and the description of the manifest starts with `DEPRECATED`. No other file changes. The shard stays published.
+
 # 0.6.0
 
 - **The duty of an agent session at a task** (Task 448 of the NUU Operations Flint, D17 and W19 of the contract of the fleet total-orchestration-1111). A person can start an agent session at a task in Ops, or attach a session to a task. The session works on the task for that person: it keeps the task in its objects, it answers a person first, it reads each change when `orbh:objects` says that the task changed, it does the changes of a review and requests the review again, and it posts progress as short comments. The init (§ The Duty of an Agent Session at a Task), `sk-task-use_task` (steps 5 to 7), and `knw-task-model` (§ An Agent Session at a Task) give it.
