@@ -10,7 +10,7 @@ required-reading:
 > The Tasks shard is deprecated since 2026-11-12. The Operations shard 0.8.0 (`ops`) holds its work: the same workflows, skills, knowledge, and scripts, with the shorthand `ops`. Do new work with Operations:
 > - Load it: `flint shard start ops`. When the Flint has no Operations 0.8.0, install it: `flint shard install @nuucognition/operations@^0.8`.
 > - The new names: `flint shard ops task-new|task-link|task-sync`, `flint shard invoke ops <workflow>`, `[[wkfl-ops-<name>]]`, `[[sk-ops-<name>]]`, `[[knw-ops-task_model]]`, `[[knw-ops-task_cli]]`, and `[[knw-ops-task_commits]]`. The step ids of the workflows do not change.
-> - Use this shard only to continue an invocation that a session opened with it (`flint shard invoke task …`). Do not uninstall it while such an invocation is open. The operator decides when it goes: `flint shard uninstall task`.
+> - The operator removes this shard from each Flint (2026-11-16). The migration and the setup of Operations 0.8.0 uninstall it. Use this shard only to finish an invocation that a session opened with it (`flint shard invoke task …`); then the uninstall can run: `flint shard uninstall task`.
 > - This shard gets no new work. The text below is the text of 0.6.0.
 
 The Tasks shard gives agents one way to work with the tasks of NUU Operations (Ops). Each task that the shard makes has two parts, linked both ways: a task note in this Flint holds the content, and an Ops task holds the state. Strike and Trident attach to the Ops task. An Orbh session keeps the Ops task in its context as an object of the Objects Protocol.

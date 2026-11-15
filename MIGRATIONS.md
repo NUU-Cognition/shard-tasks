@@ -4,7 +4,7 @@ Migration notes for Tasks. Latest version at top, separated by `---`.
 
 ## 0.6.1
 
-No migration of this shard. The shard is deprecated: install the Operations shard 0.8.0 (`flint shard install @nuucognition/operations@^0.8`), and run its migration `mig-ops-0.7.0-to-0.8.0` (`flint shard migrate run ops`). Do not uninstall this shard while an invocation of it is open.
+No migration of this shard. The shard is deprecated: install the Operations shard 0.8.0 (`flint shard install @nuucognition/operations@^0.8`), and run its migration `mig-ops-0.7.0-to-0.8.0` (`flint shard migrate run ops`), or its setup after a new install. Each of them uninstalls this shard. An open invocation of a live session delays the uninstall until that session closes it.
 
 ---
 

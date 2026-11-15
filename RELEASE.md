@@ -1,6 +1,6 @@
 # 0.6.1
 
-- **Deprecated.** The Operations shard 0.8.0 (`ops`) holds the work of this shard: the six workflows, the nine skills, the three knowledge files (now `knw-ops-task_model`, `knw-ops-task_cli`, and `knw-ops-task_commits`), and the scripts `task-new`, `task-link`, and `task-sync` (fleet storage-1112, the operator request of 2026-11-12). The init starts with a deprecation callout that gives the new names, and the description of the manifest starts with `DEPRECATED`. No other file changes. The shard stays published.
+- **Deprecated.** The Operations shard 0.8.0 (`ops`) holds the work of this shard: the six workflows, the nine skills, the three knowledge files (now `knw-ops-task_model`, `knw-ops-task_cli`, and `knw-ops-task_commits`), and the scripts `task-new`, `task-link`, and `task-sync` (fleet storage-1112, the operator request of 2026-11-12). The init starts with a deprecation callout that gives the new names, and the description of the manifest starts with `DEPRECATED`. No other file changes. The shard stays published in the registry, so that an old lock still resolves. The migration and the setup of Operations 0.8.0 uninstall it from each Flint (the operator decision of 2026-11-16).
 
 # 0.6.0
 
